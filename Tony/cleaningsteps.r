@@ -12,17 +12,28 @@ summary(initialData)
 head(initialData)
 tail(initialData)
 
-
+cleanData <- initialData
 gameClock <- as.vector(second(fast_strptime(initialData$GAME_CLOCK, "%M:%S")))
 shotClock <- is.na(initialData$SHOT_CLOCK)
 for(i in 1:length(gameClock)){
   if(shotClock[i] & gameClock[i] < 25){
-    initialData$SHOT_CLOCK[i] <- gameClock[i]
+    cleanData$SHOT_CLOCK[i] <- gameClock[i]
   }
 }
-weirdShotClock <- subset(initialData, is.na(SHOT_CLOCK))
 
-ggplot(initialData) + geom_bar(mapping = aes(SHOT_CLOCK, stat(count)))
+weirdShotClock <- subset(cleanData, is.na(SHOT_CLOCK))
+
+cleanNoNAData <- subset(cleanData, !is.na(SHOT_CLOCK))
+
+#write.csv(cleanData, "../data/shot_logs_clean.csv")
+#write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
+
+ggplot(initialData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_bar()
+ggplot(initialData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_histogram()
+ggplot(initialData, mapping = aes(GAME_CLOCK, stat(count))) + geom_bar()
+ggplot(initialData, mapping = aes(GAME_CLOCK, stat(count))) + geom_histogram()
+
+
 
 # # We can now remove any records that have NAs
 # myDataClean <- na.omit(initialData)
