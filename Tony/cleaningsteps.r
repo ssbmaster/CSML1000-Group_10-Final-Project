@@ -25,6 +25,26 @@ weirdShotClock <- subset(cleanData, is.na(SHOT_CLOCK))
 
 cleanNoNAData <- subset(cleanData, !is.na(SHOT_CLOCK))
 
+capwords <- function(s, strict = FALSE) {
+  cap <- function(s) paste(toupper(substring(s, 1, 1)),
+                           {s <- substring(s, 2); if(strict) tolower(s) else s},
+                           sep = "", collapse = " " )
+  sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+}
+
+nameformatreverse <- function(s) {
+  fname <- str_extract(s, "^\\w+")
+  lname <- str_extract(s, "\\w+$")
+  s <- paste(lname, fname, sep = ", ")
+}
+shooterName <- cleanNoNAData$player_name
+shooterName <- toupper(shooterName)
+shooterName <- nameformatreverse(shooterName)
+
+cleanNoNAData$player_name <- shooterName
+cleanNoNAData$CLOSEST_DEFENDER <- toupper(cleanNoNAData$CLOSEST_DEFENDER)
+cleanNoNAData$CLOSEST_DEFENDER <- gsub("[.]", "", cleanNoNAData$CLOSEST_DEFENDER)
+
 #write.csv(cleanData, "../data/shot_logs_clean.csv")
 #write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
 
