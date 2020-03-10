@@ -61,7 +61,7 @@ cleanNoNASecondsClockData$GAME_CLOCK <- as.vector(second(fast_strptime(cleanNoNA
 
 #write.csv(cleanData, "../data/shot_logs_clean.csv")
 #write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
-write.csv(cleanNoNASecondsClockData, "../data/shot_longs_clean_noNA_secondsclock.csv")
+#write.csv(cleanNoNASecondsClockData, "../data/shot_longs_clean_noNA_secondsclock.csv")
 
 ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_bar()
 ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_histogram()
