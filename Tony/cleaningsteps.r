@@ -15,7 +15,8 @@ tail(initialData)
 # Find NA shot clock data that was NA because the game clock was < 25 seconds left.
 # Assumption is that shot clock is equal to game clock in this case. Possible that it just wasn't recorded.
 cleanData <- initialData
-gameClock <- as.vector(second(fast_strptime(initialData$GAME_CLOCK, "%M:%S")))
+gameClock <- as.vector(second(fast_strptime(cleanData$GAME_CLOCK, "%M:%S"))) + 
+  as.vector(minute(fast_strptime(cleanData$GAME_CLOCK, "%M:%S"))) * 60
 shotClock <- is.na(initialData$SHOT_CLOCK)
 for(i in 1:length(gameClock)){
   if(shotClock[i] & gameClock[i] < 25){
@@ -56,17 +57,18 @@ cleanNoNAData$CLOSEST_DEFENDER <- toupper(cleanNoNAData$CLOSEST_DEFENDER)
 cleanNoNAData$CLOSEST_DEFENDER <- gsub("[.]", "", cleanNoNAData$CLOSEST_DEFENDER)
 
 # Seconds for game clock
+cleanNoNASecondsClockData <- cleanNoNAData
 cleanNoNASecondsClockData$GAME_CLOCK <- as.vector(second(fast_strptime(cleanNoNAData$GAME_CLOCK, "%M:%S"))) + 
   as.vector(minute(fast_strptime(cleanNoNAData$GAME_CLOCK, "%M:%S"))) * 60
 
-#write.csv(cleanData, "../data/shot_logs_clean.csv")
-#write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
-#write.csv(cleanNoNASecondsClockData, "../data/shot_longs_clean_noNA_secondsclock.csv")
+write.csv(cleanData, "../data/shot_logs_clean.csv")
+write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
+write.csv(cleanNoNASecondsClockData, "../data/shot_longs_clean_noNA_secondsclock.csv")
 
 ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_bar()
-ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_histogram()
+ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_histogram(bins = 24)
 ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom_bar()
-ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom_histogram()
+ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom_histogram(bins = 36)
 
 
 
