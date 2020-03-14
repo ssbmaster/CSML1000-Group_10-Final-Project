@@ -79,7 +79,9 @@ ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom
 
 
 # Get the scaled numeric-only data for use for clustering.
-kdataunscaled <- cleanNoNASecondsClockData[, c("FINAL_MARGIN", "SHOT_NUMBER", "PERIOD", "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
+kdataunscaled <- cleanNoNASecondsClockData[, c("FINAL_MARGIN", "SHOT_NUMBER", "PERIOD", 
+                                               "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", 
+                                               "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
 kdata <- scale(kdataunscaled)
 
 # Remove unneeded data for RAM
@@ -92,7 +94,7 @@ rm(weirdShotClock)
 
 # Elbow Method for finding the optimal number of clusters
 set.seed(123)
-# Compute and plot wss for k = 2 to k = 15.
+# Compute and plot wss for k = 1 to k = 15.
 k.max <- 15
 wss <- sapply(1:k.max, function(k){kmeans(kdata, k, nstart=50,iter.max = 15 )$tot.withinss})
 wss
@@ -114,15 +116,14 @@ kmm
 
 # Plot the clusters
 library(cluster)
-clusplot(kdataunscaled, kmm$cluster, color=TRUE, shade=TRUE,
-         labels=2, lines=0)
+clusplot(kdataunscaled, kmm$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
 
 # Centroid Plot against 1st 2 discriminant functions
 library(fpc)
 plotcluster(kdataunscaled, kmm$cluster)
 
 
-# Hierarchical clustering
+# Hierarchical Agglomerative
 d <- dist(kdata, method = "euclidean") # distance matrix
 fit <- hclust(d, method="ward")
 plot(fit) # display dendogram
