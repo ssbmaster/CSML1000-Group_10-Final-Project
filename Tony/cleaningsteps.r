@@ -78,7 +78,8 @@ ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom
 # xOnlyData <- myDataClean[, -1]
 # 
  # Let us apply kmeans for k=3 clusters 
-kdata <- cleanNoNASecondsClockData[, c(5:13, 17:19)]
+kdataunscaled <- cleanNoNASecondsClockData[, c("FINAL_MARGIN", "SHOT_NUMBER", "PERIOD", "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
+kdata <- scale(kdataunscaled)
 kmm <- kmeans(kdata, 3, nstart = 50, iter.max = 15) 
 # We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
 # Ensure that atleat 50 random sets are choosen
@@ -99,6 +100,14 @@ d_clust <- Mclust(as.matrix(kdata), G=1:30,
                  modelNames = mclust.options("emModelNames"))
 d_clust$BIC
 plot(d_clust)
+
+# Hierarchical clustering
+d <- dist(mydata, method = "euclidean") # distance matrix
+fit <- hclust(d, method="ward")
+plot(fit) # display dendogram
+groups <- cutree(fit, k=5) # cut tree into 5 clusters
+# draw dendogram with red borders around the 5 clusters
+rect.hclust(fit, k=5, border="red")
 # # 30 indices to find the best one
 # library(NbClust)
 # nb <- NbClust(kdata, diss=NULL, distance = "euclidean",
