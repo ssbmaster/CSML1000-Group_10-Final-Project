@@ -76,38 +76,69 @@ ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom
 # myDataClean <- na.omit(initialData)
 # summary(myDataClean)
 # xOnlyData <- myDataClean[, -1]
-# 
- # Let us apply kmeans for k=3 clusters 
+
+
+# Get the scaled numeric-only data for use for clustering.
 kdataunscaled <- cleanNoNASecondsClockData[, c("FINAL_MARGIN", "SHOT_NUMBER", "PERIOD", "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
 kdata <- scale(kdataunscaled)
-kmm <- kmeans(kdata, 3, nstart = 50, iter.max = 15) 
-# We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
-# Ensure that atleat 50 random sets are choosen
-kmm
+
+# Remove unneeded data for RAM
+rm(gameClock)
+rm(shooterName)
+rm(cleanData)
+rm(cleanNoNAData)
+rm(initialData)
+rm(weirdShotClock)
 
 # Elbow Method for finding the optimal number of clusters
 set.seed(123)
 # Compute and plot wss for k = 2 to k = 15.
-k.max <- 10
+k.max <- 15
 wss <- sapply(1:k.max, function(k){kmeans(kdata, k, nstart=50,iter.max = 15 )$tot.withinss})
 wss
 plot(1:k.max, wss,
      type="b", pch = 19, frame = FALSE,
      xlab="Number of clusters K",
-    ylab="Total within-clusters sum of squares")
+     ylab="Total within-clusters sum of squares")
 # Bayesian Inference Criterion for k means to validate choice from Elbow Method
-d_clust <- Mclust(as.matrix(kdata), G=1:30,
-                 modelNames = mclust.options("emModelNames"))
+d_clust <- Mclust(as.matrix(kdata), G=1:10,
+                  modelNames = mclust.options("emModelNames"))
 d_clust$BIC
 plot(d_clust)
 
+# Let us apply kmeans for k=4 clusters 
+kmm <- kmeans(kdata, 4, nstart = 50, iter.max = 15) 
+# We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
+# Ensure that atleat 50 random sets are choosen
+kmm
+
+# Plot the clusters
+library(cluster)
+clusplot(kdataunscaled, kmm$cluster, color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+
+# Centroid Plot against 1st 2 discriminant functions
+library(fpc)
+plotcluster(kdataunscaled, kmm$cluster)
+
+
 # Hierarchical clustering
-d <- dist(mydata, method = "euclidean") # distance matrix
+d <- dist(kdata, method = "euclidean") # distance matrix
 fit <- hclust(d, method="ward")
 plot(fit) # display dendogram
-groups <- cutree(fit, k=5) # cut tree into 5 clusters
-# draw dendogram with red borders around the 5 clusters
-rect.hclust(fit, k=5, border="red")
+groups <- cutree(fit, k=4) # cut tree into 4 clusters
+# draw dendogram with red borders around the 4 clusters
+rect.hclust(fit, k=4, border="red")
+
+# Plot the clusters
+library(cluster)
+clusplot(kdataunscaled, fit$cluster, color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+
+# Centroid Plot against 1st 2 discriminant functions
+library(fpc)
+plotcluster(kdataunscaled, fit$cluster)
+
 # # 30 indices to find the best one
 # library(NbClust)
 # nb <- NbClust(kdata, diss=NULL, distance = "euclidean",
