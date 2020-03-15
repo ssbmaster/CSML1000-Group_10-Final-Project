@@ -15,7 +15,6 @@ library(stringr)
 library(raster)
 library(png)
 library(ggplot2)
-library(magick)
 
 # Load the once per session stuff here; most efficient outside of server/ui functions
 load("shotData.RData")
@@ -228,6 +227,12 @@ server <- function(session, input, output) {
 
     })
 
+    
+    output$circleTest <- renderPlot(ggplot(pointsPlot, (aes(x=pointsPlot$x, y=pointsPlot$y))) + 
+        xlim(0, 800) + ylim(0, 425) +
+        geom_point(), width=800, height=425)
+
+    
     
     #     output$image_brushinfo <- renderPrint({
     #     cat("Brush (debounced):\n")
