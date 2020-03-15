@@ -79,7 +79,7 @@ ggplot(cleanNoNASecondsClockData, mapping = aes(GAME_CLOCK, stat(count))) + geom
 
 
 # Get the scaled numeric-only data for use for clustering.
-kdataunscaled <- cleanNoNASecondsClockData[, c("FINAL_MARGIN", "SHOT_NUMBER", "PERIOD", 
+kdataunscaled <- cleanNoNASecondsClockData[, c("SHOT_NUMBER", "PERIOD", 
                                                "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", 
                                                "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
 kdata <- scale(kdataunscaled)
@@ -95,7 +95,7 @@ rm(weirdShotClock)
 # Elbow Method for finding the optimal number of clusters
 set.seed(123)
 # Compute and plot wss for k = 1 to k = 15.
-k.max <- 15
+k.max <- 10
 wss <- sapply(1:k.max, function(k){kmeans(kdata, k, nstart=50,iter.max = 15 )$tot.withinss})
 wss
 plot(1:k.max, wss,
@@ -108,8 +108,8 @@ d_clust <- Mclust(as.matrix(kdata), G=1:10,
 d_clust$BIC
 plot(d_clust)
 
-# Let us apply kmeans for k=4 clusters 
-kmm <- kmeans(kdata, 4, nstart = 50, iter.max = 15) 
+# Let us apply kmeans for k=3 clusters 
+kmm <- kmeans(kdata, 3, nstart = 50, iter.max = 15) 
 # We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
 # Ensure that atleat 50 random sets are choosen
 kmm
@@ -122,6 +122,34 @@ clusplot(kdataunscaled, kmm$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
 library(fpc)
 plotcluster(kdataunscaled, kmm$cluster)
 
+# PCA
+pca <- prcomp(kdata, center = TRUE)
+summary(pca)
+biplot(pca)
+
+library(cluster)
+#library(factoextra)
+
+# Plot kmeans clusters to see them
+cleanNoNASecondsClockData %>%
+  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  ggplot(aes(SHOT_DIST, CLOSE_DEF_DIST, color = cluster)) +
+  geom_point(position = "jitter") + facet_grid(PERIOD ~ FGM)
+
+cleanNoNASecondsClockData %>%
+  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  ggplot(aes(DRIBBLES, SHOT_DIST, color = cluster)) +
+  geom_point(position = "jitter") + facet_grid(PERIOD ~ FGM)
+
+cleanNoNASecondsClockData %>%
+  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  ggplot(aes(SHOT_DIST, CLOSE_DEF_DIST, color = cluster)) +
+  geom_point(position = "jitter") + facet_grid(~ FGM)
+
+cleanNoNASecondsClockData %>%
+  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  ggplot(aes(DRIBBLES, SHOT_DIST, color = cluster)) +
+  geom_point(position = "jitter") + facet_wrap(~ FGM)
 
 # Hierarchical Agglomerative
 d <- dist(kdata, method = "euclidean") # distance matrix
