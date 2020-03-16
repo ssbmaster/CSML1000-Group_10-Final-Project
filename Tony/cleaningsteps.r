@@ -3,6 +3,8 @@ library(tidyverse)
 library(mclust)
 library(chron)
 library(lubridate)
+library(cluster)
+library(fpc)
 
 # Read the data
 initialData <- as_tibble(read.csv('../data/shot_logs.csv', header = TRUE, na.strings = c('NA','','#NA'), stringsAsFactors = FALSE))
@@ -66,7 +68,7 @@ cleanNoNASecondsClockData <- cleanNoNASecondsClockData[cleanNoNASecondsClockData
 
 # write.csv(cleanData, "../data/shot_logs_clean.csv")
 # write.csv(cleanNoNAData, "../data/shot_logs_clean_noNA.csv")
-# write.csv(cleanNoNASecondsClockData, "../data/shot_longs_clean_noNA_secondsclock.csv")
+# write.csv(cleanNoNASecondsClockData, "../data/shot_logs_clean_noNA_secondsclock.csv")
 
 ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_bar()
 ggplot(cleanNoNASecondsClockData, mapping = aes(SHOT_CLOCK, stat(count))) + geom_histogram(bins = 24)
@@ -112,67 +114,68 @@ d_clust$BIC
 plot(d_clust)
 
 # Let us apply kmeans for k=3 clusters 
-kmm <- kmeans(kdata, 4, nstart = 50, iter.max = 15) 
+kmm.3 <- kmeans(kdata, 3, nstart = 50, iter.max = 15) 
 # We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
 # Ensure that atleat 50 random sets are choosen
-kmm
+kmm.3
 
 # Plot the clusters
-library(cluster)
-clusplot(kdataunscaled, kmm$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+clusplot(kdataunscaled, kmm.3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
 
 # Centroid Plot against 1st 2 discriminant functions
-library(fpc)
-plotcluster(kdataunscaled, kmm$cluster)
+plotcluster(kdataunscaled, kmm.3$cluster)
 
 # PCA
-pca <- prcomp(kdata, center = TRUE)
+pca <- prcomp(kdata)
 summary(pca)
-biplot(pca, )
-
-library(cluster)
-#library(factoextra)
+biplot(pca, cex = c(0.01,1))
 
 # Plot kmeans clusters to see them
 cleanNoNASecondsClockData %>%
-  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  mutate(cluster = factor(kmm.3$cluster)) %>%
   ggplot(aes(SHOT_DIST, CLOSE_DEF_DIST, color = cluster)) +
-  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_grid(PERIOD ~ FGM)
+  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_grid(PERIOD ~ SHOT_RESULT) +
+  labs(title = "Shot Distance vs Closest Defender Distance, by Shot Result and Period (3 Clusters)") + 
+  xlab("Shot Distance (ft)") + ylab("Closest Defender Distance")
 
 cleanNoNASecondsClockData %>%
-  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  mutate(cluster = factor(kmm.3$cluster)) %>%
   ggplot(aes(DRIBBLES, SHOT_DIST, color = cluster)) +
-  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_grid(PERIOD ~ FGM)
+  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_grid(PERIOD ~ SHOT_RESULT) +
+  labs(title = "Dribbles vs Shot Distance, by Shot Result and Period (3 Clusters)") + 
+  ylab("Shot Distance (ft)") + xlab("# of Dribbles")
 
 cleanNoNASecondsClockData %>%
-  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  mutate(cluster = factor(kmm.3$cluster)) %>%
   ggplot(aes(SHOT_DIST, CLOSE_DEF_DIST, color = cluster)) +
-  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_wrap(~ FGM)
+  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_wrap(~ SHOT_RESULT) +
+  labs(title = "Shot Distance vs Closest Defender Distance, by Shot Result (3 Clusters)") + 
+  xlab("Shot Distance (ft)") + ylab("Closest Defender Distance (ft)")
 
 cleanNoNASecondsClockData %>%
-  mutate(cluster = factor(kmm$cluster), row.names(player_name)) %>%
+  mutate(cluster = factor(kmm.3$cluster)) %>%
   ggplot(aes(DRIBBLES, SHOT_DIST, color = cluster)) +
-  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_wrap(~ FGM)
+  geom_point(position = "jitter", alpha = 0.5, size = 0.5) + facet_wrap(~ SHOT_RESULT) +
+  labs(title = "Dribbles vs Shot Distance, by Shot Result (3 Clusters)") +
+  ylab("Shot Distance (ft)") + xlab("# of Dribbles")
 
 ggplot(cleanNoNASecondsClockData, aes(SHOT_DIST)) + geom_bar() + 
-  labs(title = "Shot Distance Histogram") + xlab("Shot Distance") + ylab("Total # of shots")
+  labs(title = "Shot Distance Histogram") + xlab("Shot Distance (ft)") + ylab("Total # of shots")
 
-# Hierarchical Agglomerative
-d <- dist(kdata, method = "euclidean") # distance matrix
-fit <- hclust(d, method="ward")
-plot(fit) # display dendogram
-groups <- cutree(fit, k=4) # cut tree into 4 clusters
-# draw dendogram with red borders around the 4 clusters
-rect.hclust(fit, k=4, border="red")
+# # Hierarchical Agglomerative
+# d <- dist(kdata, method = "euclidean") # distance matrix
+# fit <- hclust(d, method="ward")
+# plot(fit) # display dendogram
+# groups <- cutree(fit, k=4) # cut tree into 4 clusters
+# # draw dendogram with red borders around the 4 clusters
+# rect.hclust(fit, k=4, border="red")
 
-# Plot the clusters
-library(cluster)
-clusplot(kdataunscaled, fit$cluster, color=TRUE, shade=TRUE,
-         labels=2, lines=0)
-
-# Centroid Plot against 1st 2 discriminant functions
-library(fpc)
-plotcluster(kdataunscaled, fit$cluster)
+# # Plot the clusters
+# clusplot(kdataunscaled, fit$cluster, color=TRUE, shade=TRUE,
+#          labels=2, lines=0)
+# 
+# # Centroid Plot against 1st 2 discriminant functions
+# plotcluster(kdataunscaled, fit$cluster)
 
 # # 30 indices to find the best one
 # library(NbClust)
@@ -180,23 +183,3 @@ plotcluster(kdataunscaled, fit$cluster)
 #              min.nc=2, max.nc=4, method = "kmeans",
 #              index = "all", alphaBeale = 0.1)
 # hist(nb$Best.nc[1,], breaks = max(na.omit(nb$Best.nc[1,])))
-
-# # subetting ----
-# set.seed(123) # set the seed to make the partition reproducible
-# # 80% of the sample size
-# smp_size <- floor(0.0025 * nrow(studentInfo))
-# train_ind <- sample(seq_len(nrow(studentInfo)), size = smp_size)
-
-# # creating test and training sets that contain all of the predictors
-# studentInfo_test <- studentInfo[train_ind, ]
-# studentInfo_train <- studentInfo[-train_ind, ]
-#  
-# needed<-which(studentAssessment$id_student %in% studentInfo_test$id_student)    
-# studentAssessment_test<-studentAssessment[needed,]
-#  
-#  
-# needed<-which(studentRegistration$id_student %in% studentInfo_test$id_student)    
-# studentRegistration_test<-studentRegistration[needed,]
-# 
-# needed<-which(studentVle$id_student %in% studentInfo_test$id_student)    
-# studentVle_test<-studentVle[needed,]
