@@ -161,6 +161,26 @@ cleanNoNASecondsClockData %>%
 
 ggplot(cleanNoNASecondsClockData, aes(SHOT_DIST)) + geom_bar() + 
   labs(title = "Shot Distance Histogram") + xlab("Shot Distance (ft)") + ylab("Total # of shots")
+ggplot(cleanNoNASecondsClockData, aes(CLOSE_DEF_DIST)) + geom_bar() + 
+  labs(title = "Closest Defender Distance Histogram") + xlab("Closest Defender Distance (ft)") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(PERIOD)) + geom_bar() + 
+  labs(title = "Period Histogram") + xlab("Period") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(GAME_CLOCK)) + geom_bar() + 
+  labs(title = "Game Clock Histogram") + xlab("Game Clock (seconds)") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(SHOT_CLOCK)) + geom_bar() + 
+  labs(title = "Shot Clock Histogram") + xlab("Shot Clock (seconds)") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(FINAL_MARGIN)) + geom_bar() + 
+  labs(title = "Final Margin Histogram") + xlab("Final Margin") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(SHOT_NUMBER)) + geom_bar() + 
+  labs(title = "Shot Number Histogram") + xlab("Shot Number") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(DRIBBLES)) + geom_bar() + 
+  labs(title = "Dribbles Histogram") + xlab("Dribbles") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(TOUCH_TIME)) + geom_bar() + 
+  labs(title = "Touch Time Histogram") + xlab("Touch Time (seconds)") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(PTS_TYPE)) + geom_bar() + 
+  labs(title = "Points Type Histogram") + xlab("Point Type") + ylab("Count")
+ggplot(cleanNoNASecondsClockData, aes(SHOT_RESULT)) + geom_bar() + 
+  labs(title = "Shot Result Histogram") + xlab("Shot Result") + ylab("Count")
 
 # # Hierarchical Agglomerative
 # d <- dist(kdata, method = "euclidean") # distance matrix
