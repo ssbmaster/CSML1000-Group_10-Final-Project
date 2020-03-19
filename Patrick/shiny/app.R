@@ -12,7 +12,7 @@ library(shinyWidgets)
 #library(htmltools)
 #library(DT)
 #library(stringr)
-#library(raster)
+library(raster)
 #library(png)
 
 # Load the once per session stuff here; most efficient outside of server/ui functions
@@ -48,9 +48,9 @@ ui <- fluidPage(
                     tabPanel("Coach's Interface",
                              sidebarLayout(
                                  sidebarPanel(
-
-                                      actionButton("reset",
-                                                   "Reset All"),
+                                     
+                                     actionButton("reset",
+                                                  "Reset All"),
                                      h4(" "),
                                      verbatimTextOutput("image_hoverinfo"),
                                      verbatimTextOutput("shooterPos"),
@@ -72,13 +72,7 @@ ui <- fluidPage(
                                                      id = "image_hover",
                                                      delay = 500,
                                                      delayType = "throttle"
-                                                 )),
-                                     #javascript test
-                                     tags$script(HTML("var c = document.getElementById('courtPlot');
-                                        var ctx = c.getContext('2d');
-                                        ctx.beginPath();
-                                        ctx.font = '30px Arial';
-                                        ctx.fillText('Hello World', 10, 50);"))
+                                                 ))
                                  )
                              )
                     )
@@ -121,13 +115,13 @@ server <- function(session, input, output) {
         {
             cat("")
         }else{
-        cat("Shooter Position (from top-left corner):\n")
-        cat("x = ")
-        cat(round(input$image_click$x * scalingFactor,digits=2))
-        cat(" feet")
-        cat("\ny = ")
-        cat(round(input$image_click$y * scalingFactor,digits=2))
-        cat(" feet")
+            cat("Shooter Position (from top-left corner):\n")
+            cat("x = ")
+            cat(round(input$image_click$x * scalingFactor,digits=2))
+            cat(" feet")
+            cat("\ny = ")
+            cat(round(input$image_click$y * scalingFactor,digits=2))
+            cat(" feet")
         }
     })
     
@@ -138,9 +132,9 @@ server <- function(session, input, output) {
         output$defenderShooterDist <- NULL
         output$prediction <- NULL
     })
-
+    
     observeEvent(input$dbl_click, {
-                #input closest defender distance into our current shot data frame to be used for prediction
+        #input closest defender distance into our current shot data frame to be used for prediction
         individualShot$CLOSE_DEF_DIST<- distanceDefender
         
         
@@ -202,7 +196,7 @@ server <- function(session, input, output) {
                 cat(" somethings")
             })
         })
-    
+        
         output$defenderShooterDist <- renderPrint({
             cat("Distance from Shooter to Closest Defender:\n")
             cat(round(distanceDefender,digits=2))
