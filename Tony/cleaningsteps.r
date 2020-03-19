@@ -7,7 +7,7 @@ library(cluster)
 library(fpc)
 
 # Read the data
-initialData <- as_tibble(read.csv('../data/shot_logs.csv', header = TRUE, na.strings = c('NA','','#NA'), stringsAsFactors = FALSE))
+initialData <- as_tibble(read.csv('./data/shot_logs.CSV', header = TRUE, na.strings = c('NA','','#NA'), stringsAsFactors = FALSE))
 
 # Explore the data a bit
 summary(initialData)

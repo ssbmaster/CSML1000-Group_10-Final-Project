@@ -1,0 +1,22 @@
+Feature,Feature Description
+GAME_ID,A unique ID for each game 
+MATCHUP,Shows the date of the match and the teams the match is between
+LOCATION,"A - Away, H - Home. Shows the location of the match with respect to the first team in the match up column"
+W,"Win or Loss. W means win and L means Loss, with respect to the first team in the match up column"
+FINAL_MARGIN,Points difference between the teams at the end of the game
+SHOT_NUMBER,To be read in conjunction with the PERIOD column. Indicates the shot number in a given game period
+PERIOD,Indicates the game period
+GAME_CLOCK,Time elapsed since the period commenced. This datset shows the time at which the shot was attempted. Max 12 minutes per period
+SHOT_CLOCK,The length of time for a given shot in seconds. Max - 24 seconds is a rule
+DRIBBLES,The number of times the ball was dribbled before the shot was attempted
+TOUCH_TIME,The length of time a player touched the ball
+SHOT_DIST,The distance from which a shot was attempted. Distance in feet
+PTS_TYPE,Points awarded if a shot was made. 2 pointer or 3 pointer shots
+SHOT_RESULT,Indicates whether the shot was made or missed
+CLOSEST_DEFENDER,Shows the name of the player that was the closest defender
+CLOSEST_DEFENDER_PLAYER_ID,Unique ID of the closest defender
+CLOSE_DEF_DIST,Distance of the closest defender in feet
+FGM,"An abbreviation for FIELD GOALS MADE. A proxy for SHOT_RESULT, 0 indicates missed shot and 1 indicates shot made"
+PTS,Points awarded for shots made
+player_name,Name of the player who attempted the shot
+player_id,Unique ID of the player who attempted the shot
