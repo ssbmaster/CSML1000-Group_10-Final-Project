@@ -1,0 +1,70 @@
+> #tuneGrid for GBM
+> gbmGrid <- expand.grid(
++   #interaction.depth = c(10, 20),
++   #n.trees = c(50, 100, 250),
++   interaction.depth = c(5, 10, 20),
++   n.trees = c(50, 100, 200),
++   n.minobsinnode = 10,
++   shrinkage = .1
++ )
+> #train model
+> set.seed(123)
+> ptm_rf <- proc.time()
+> model_gbm <- train(
++   FGM ~ .,
++   #data = data[trainSlices[[1]],],
++   data = shotTrain,
++   #data = train_data,
++   method = "gbm",
++   #family="gaussian",
++   #distribution = "gaussian",
++   trControl = gbm.trainControl,
++   #tuneLength = 5
++   tuneGrid = gbmGrid
++ )
++ Fold1: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=200 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3656             nan     0.1000    0.0058
+     2        1.3556             nan     0.1000    0.0050
+     3        1.3473             nan     0.1000    0.0040
+     4        1.3403             nan     0.1000    0.0034
+     5        1.3346             nan     0.1000    0.0028
+     6        1.3297             nan     0.1000    0.0023
+     7        1.3257             nan     0.1000    0.0019
+     8        1.3223             nan     0.1000    0.0016
+     9        1.3193             nan     0.1000    0.0015
+    10        1.3165             nan     0.1000    0.0013
+    20        1.3016             nan     0.1000    0.0004
+    40        1.2926             nan     0.1000    0.0000
+    60        1.2888             nan     0.1000    0.0001
+    80        1.2863             nan     0.1000   -0.0000
+   100        1.2841             nan     0.1000   -0.0000
+   120        1.2822             nan     0.1000   -0.0000
+   140        1.2804             nan     0.1000   -0.0000
+   160        1.2787             nan     0.1000   -0.0000
+   180        1.2771             nan     0.1000   -0.0000
+   200        1.2755             nan     0.1000   -0.0000
+
+- Fold1: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=200 
++ Fold1: shrinkage=0.1, interaction.depth=10, n.minobsinnode=10, n.trees=200 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3642             nan     0.1000    0.0063
+     2        1.3538             nan     0.1000    0.0052
+     3        1.3444             nan     0.1000    0.0045
+     4        1.3373             nan     0.1000    0.0036
+     5        1.3309             nan     0.1000    0.0030
+     6        1.3256             nan     0.1000    0.0026
+     7        1.3211             nan     0.1000    0.0021
+     8        1.3172             nan     0.1000    0.0018
+     9        1.3136             nan     0.1000    0.0016
+    10        1.3105             nan     0.1000    0.0013
+    20        1.2956             nan     0.1000    0.0003
+    40        1.2865             nan     0.1000    0.0000
+    60        1.2816             nan     0.1000   -0.0000
+    80        1.2779             nan     0.1000   -0.0000
+   100        1.2748             nan     0.1000   -0.0001
+   120        1.2715             nan     0.1000   -0.0000
+   140        1.2686             nan     0.1000   -0.0000
+   160        1.2653             nan     0.1000   -0.0001
+   180        1.2624             nan     0.1000   -0.0001
+   200        1.2597             nan     0.1000   -0.0000

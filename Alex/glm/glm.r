@@ -61,16 +61,16 @@ shotTest = subset(shotData, shotSample == FALSE)
 
 #set a train control
 #use cross validation
-# glm.trainControl = trainControl(
-#   method = "cv", 
-#   number = 5, 
-#   #Estimate class probabilities
-#   classProbs = TRUE,
-#   #Evaluate performance using the following function
-#   summaryFunction = twoClassSummary,
-#   allowParallel = TRUE,
-#   verbose = TRUE
-# )
+glm.trainControl = trainControl(
+  method = "cv",
+  number = 5,
+  #Estimate class probabilities
+  classProbs = TRUE,
+  #Evaluate performance using the following function
+  summaryFunction = twoClassSummary,
+  allowParallel = TRUE,
+  verbose = TRUE
+)
 
 #no need to tuneGrid because logistic regression using glm has no parameters
 #train model
@@ -80,7 +80,7 @@ model_glm <- train(
   FGM ~ ., 
   data = shotTrain,
   method = 'glm',
-  #trControl = glm.trainControl
+  trControl = glm.trainControl
 )
 proc.time() - ptm_rf
 

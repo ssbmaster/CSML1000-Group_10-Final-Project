@@ -239,6 +239,14 @@ pca <- prcomp(kdata)
 summary(pca)
 biplot(pca, cex = c(0.01,1))
 
+# Get response variable FGM
+k_response_variable <- cleanNoNASecondsClockData[, c('FGM')]
+
+#merge pca
+pca_matrix <- pca$x
+combined_pca_response_variable <- cbind(pca_matrix, k_response_variable)
+pca_df <- as.data.frame(combined_pca_response_variable)
+write.csv(pca_df, '../data/shot_logs_pca.csv')
 # # Hierarchical Agglomerative
 # d <- dist(kdata, method = "euclidean") # distance matrix
 # fit <- hclust(d, method="ward")

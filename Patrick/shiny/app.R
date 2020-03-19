@@ -9,30 +9,36 @@
 
 library(shiny)
 library(shinyWidgets)
-library(htmltools)
-library(DT)
-library(stringr)
+#library(htmltools)
+#library(DT)
+#library(stringr)
 library(raster)
-library(png)
-library(ggplot2)
-library(magick)
+#library(png)
+library(caret)
+library(gbm)
 
 # Load the once per session stuff here; most efficient outside of server/ui functions
-load("shotData.RData")
+
+#load the fitted Regression Tree model
+load("gbm_v2.RData")
+
+#load a blank data frame for the current shot (to predict with)
+load("individualShot.RData")
+
 #basketball court image
-courtPlot<-"./stockCourtCropResized800.jpg"
+courtPlot <- "stockcourtCropResized800.jpg"
 #width of basketball court image in pixels
 widthCourt  <- 800
+heightCourt <- 425
+#scaling the values from pixels to feet based on 94 foot wide court
+scalingFactor <- 94/widthCourt
+
 basketX <- 40
 basketY <- 213
 #distance to hoop from point on court
-distance <- NULL
-
-x <- c(0, 50, 100)
-y <- c(0, 50, 100)
-
-pointsPlot <- data.frame(x, y)
-
+distanceBasket <- NULL
+#distance from shooter to closest defender
+distanceDefender <- NULL
 
 # Define UI for application
 ui <- fluidPage(
@@ -41,79 +47,36 @@ ui <- fluidPage(
         tags$p("Check out our:",
                tags$a(href = "https://github.com/patrick-osborne/CSML1000-Group_10-Final-Project/", "Github")),
         tabsetPanel(type = "tabs",
-                    # Data Analysts's Console Code Block ----
-                    tabPanel("Data Analyst's Console", 
-                             sidebarLayout(
-                                 sidebarPanel(
-                                     selectInput("model",
-                                                 "Association Rule Mining Model:",
-                                                 choices=c("Apriori", "ECLAT", "FP-Growth (Not Available)")),
-                                     sliderInput("support",
-                                                 "Support:",
-                                                 min = 0.005,
-                                                 max = 0.0401,
-                                                 value = 0),
-                                     sliderInput("confidence",
-                                                 "Confidence:",
-                                                 min = 0.5,
-                                                 max = 1,
-                                                 value = 0),
-                                     sliderInput("lift",
-                                                 "Lift:",
-                                                 min = 4.5,
-                                                 max = 104,
-                                                 value = 0),
-                                     sliderInput("count",
-                                                 "Count:",
-                                                 min = 0,
-                                                 max = 825,
-                                                 value = 0)
-                                 ),
-                                 
-                                 # Show beautiful visuals to the right of the sidepanel!
-                                 mainPanel(
-                                     h3("[Data Table]"),
-                                     DTOutput ("console")
-                                 )
-                             )
-                    ),
-                    
-                    # User's Shopping Cart Code Block ----
+                    # Coach's Interface ----
                     tabPanel("Coach's Interface",
                              sidebarLayout(
                                  sidebarPanel(
-                                     pickerInput("cartSelect",
-                                                 label="Select Items:",
-                                                 choices="Choice 1",
-                                                 multiple=TRUE,
-                                                 options=list('live-search' = TRUE
-                                                 )
-                                     ),
-                                     actionButton("addCart",
-                                                  "Add Items to Cart"),
-                                     actionButton("clearCart",
-                                                  "Clear Cart"),
-                                     #h5("[Text]"),
+                                     
+                                     actionButton("reset",
+                                                  "Reset All"),
+                                     h4(" "),
                                      verbatimTextOutput("image_hoverinfo"),
-                                     verbatimTextOutput("image_clickinfo"),
-                                     verbatimTextOutput("distBasket")
-                                     # verbatimTextOutput("image_brushinfo")
+                                     verbatimTextOutput("shooterPos"),
+                                     verbatimTextOutput("defenderPos"),
+                                     verbatimTextOutput("distBasket"),
+                                     verbatimTextOutput("defenderShooterDist"),
+                                     tags$b(verbatimTextOutput("prediction"))
                                  ),
                                  
                                  # Show beautiful visuals to the right of the sidepanel!
                                  mainPanel(
-                                     h3("Court Panel"),
+                                     h4(tags$b("Single-click to place the shooter. Double-click to place the defender.")),
                                      imageOutput("courtPlot", 
                                                  click = "image_click",
+                                                 dblclick = "dbl_click",
                                                  width = widthCourt,
+                                                 height = heightCourt,
                                                  hover = hoverOpts(
                                                      id = "image_hover",
                                                      delay = 500,
                                                      delayType = "throttle"
                                                  )),
-                                     plotOutput("circleTest")
-                                     
-                                 )
+                                     tags$a(href = "https://www.123rf.com/photo_24220420_a-realistic-vector-hardwood-textured-basketball-court-.html", "Court image courtesy of 123RF.com"))                               
                              )
                     )
         )
@@ -122,60 +85,6 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(session, input, output) {
-    output$emptyMessage <- renderText({ "Add items to your cart to get some recommendations." })
-    output$console <- renderDataTable(shotData, rownames=FALSE)
-    #shows an empty shopping cart (table)
-    output$cart <- renderDataTable(shotData, 
-                                   rownames=FALSE, 
-                                   options=list(pageLength=9))
-    
-    observeEvent(input$model, {
-        output$console <- renderDataTable(shotData,
-                                          rownames=FALSE, 
-                                          options=list(pageLength=9))
-        
-        
-    })
-    
-    observeEvent(input$support, {
-        output$console <- renderDataTable(shotData,
-                                          rownames=FALSE, 
-                                          options=list(pageLength=9))
-        
-        
-    })
-    
-    observeEvent(input$confidence, {
-        output$console <- renderDataTable(shotData,
-                                          rownames=FALSE, 
-                                          options=list(pageLength=9))
-        
-        
-    })
-    
-    observeEvent(input$lift, {
-        output$console <- renderDataTable(shotData,
-                                          rownames=FALSE, 
-                                          options=list(pageLength=9))
-        
-        
-    })
-    
-    observeEvent(input$count, {
-        output$console <- renderDataTable(shotData,
-                                          rownames=FALSE, 
-                                          options=list(pageLength=9))
-        
-        
-    })
-    
-    observeEvent(input$addCart, {
-    })
-    
-    
-    observeEvent(input$clearCart, {
-        
-    })
     
     output$courtPlot <- renderImage({
         
@@ -187,54 +96,118 @@ server <- function(session, input, output) {
             contentType = "image/png",
             alt = "This is alternate text"
         )
-    })
+    }, deleteFile = FALSE)
     
     output$image_hoverinfo <- renderPrint({
-        cat("Position:\n")
-        cat("x=")
-        str(input$image_hover$x)
-        cat("y=")
-        str(input$image_hover$y)
+        if(is.null(input$image_hover$x) && is.null(input$image_hover$y))
+        {
+            cat("")
+        }else{
+            cat("Mouse Hover Position (from top-left corner):\n")
+            cat("x = ")
+            cat(round(input$image_hover$x * scalingFactor,digits=2))
+            cat(" feet")
+            cat("\ny = ")
+            cat(round(input$image_hover$y * scalingFactor,digits=2))
+            cat(" feet")
+        }
     })
     
-    output$image_clickinfo <- renderPrint({
-        cat("Position:\n")
-        cat("x=")
-        str(input$image_click$x)
-        cat("y=")
-        str(input$image_click$y)
+    output$shooterPos <- renderPrint({
+        if(is.null(input$image_click$x) && is.null(input$image_click$y))
+        {
+            cat("")
+        }else{
+            cat("Shooter Position (from top-left corner):\n")
+            cat("x = ")
+            cat(round(input$image_click$x * scalingFactor,digits=2))
+            cat(" feet")
+            cat("\ny = ")
+            cat(round(input$image_click$y * scalingFactor,digits=2))
+            cat(" feet")
+        }
     })
     
-    # output$distBasket <- renderPrint({
-    #     cat("Distance to Basket:\n")
-    #     pointDistance(c(41.5, 191), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)
-    #     
-    # })
+    observeEvent(input$reset, {
+        output$shooterPos <- NULL
+        output$defenderPos <- NULL
+        output$distBasket <- NULL
+        output$defenderShooterDist <- NULL
+        output$prediction <- NULL
+    })
     
-    
-    
-    observeEvent(input$image_click, {
+    observeEvent(input$dbl_click, {
+        #input closest defender distance into our current shot data frame to be used for prediction
+        individualShot$CLOSE_DEF_DIST<- distanceDefender
         
-        #this should output the acutal width of the image in the UI but the number returned is too large.
-        #width  <- session$clientData$output_courtPlot_width
-        scalingFactor <- 94/widthCourt
-        distance <- (pointDistance(c(basketX, basketY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
-        output$distBasket <- renderPrint({
-            cat("Distance to Basket:\n")
-            cat(distance)
+        
+        distanceDefender <-(pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
+        print(distanceDefender)
+        output$defenderPos <- renderPrint({
+            cat("Defender Position (from top-left corner):\n")
+            cat("x = ")
+            cat(round(input$dbl_click$x * scalingFactor,digits=2))
+            cat(" feet")
+            cat("\ny = ")
+            cat(round(input$dbl_click$y * scalingFactor,digits=2))
             cat(" feet")
         })
-
-
+        
+        output$distBasket <- renderPrint({
+            cat("Shooter Distance to Basket:\n")
+            cat(round(distanceBasket,digits=2))
+            cat(" feet")
+        })
+        
+        observeEvent(input$image_click, {
+            
+            output$shooterPos <- renderPrint({
+                if(is.null(input$image_click$x) && is.null(input$image_click$y))
+                {
+                    cat("")
+                }else{
+                    cat("Shooter Position (from top-left corner):\n")
+                    cat("x = ")
+                    cat(round(input$image_click$x * scalingFactor,digits=2))
+                    cat(" feet")
+                    cat("\ny = ")
+                    cat(round(input$image_click$y * scalingFactor,digits=2))
+                    cat(" feet")
+                }
+            })
+            
+            #this should output the acutal width of the image in the UI but the number returned is too large.
+            #width  <- session$clientData$output_courtPlot_width
+            distanceBasket <- (pointDistance(c(basketX, basketY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
+            output$distBasket <- renderPrint({
+                cat("Distance to Basket:\n")
+                cat(round(distanceBasket,digits=2))
+                cat(" feet")
+            })
+            
+            #input the selected distance to basket into our current shot data frame to be used for prediction
+            individualShot$SHOT_DIST <- distanceBasket
+            
+            #input the selected distance to basket into our current shot data frame to be used for prediction
+            individualShot$CLOSE_DEF_DIST <- (pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
+            
+            #run the prediction with our current shot data frame
+            individualPredict <- predict(model_gbm, individualShot, na.action=na.pass, type="prob")
+            output$prediction <- renderPrint({
+                cat("Predicted Likelihood of Scoring:\n")
+                cat(round(individualPredict$yes*100, digits=2))
+                cat("%")
+            })
+        })
+        
+        output$defenderShooterDist <- renderPrint({
+            cat("Distance from Shooter to Closest Defender:\n")
+            cat(round(distanceDefender,digits=2))
+            cat(" feet")
+            
+            
+        })
     })
-
-    
-    #     output$image_brushinfo <- renderPrint({
-    #     cat("Brush (debounced):\n")
-    #     str(input$image_brush)
-    # })
-    
-    
     
 }
 
