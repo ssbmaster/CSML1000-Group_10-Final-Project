@@ -24,7 +24,7 @@ load("fittedRegTreeModel.RData")
 load("individualShot.RData")
 
 #basketball court image
-courtPlot <- "./stockCourtCropResized800.jpg"
+courtPlot <- "stockcourtCropResized800.jpg"
 #width of basketball court image in pixels
 widthCourt  <- 800
 #scaling the values from pixels to feet based on 94 foot wide court
@@ -40,11 +40,6 @@ distanceDefender <- NULL
 # Define UI for application
 ui <- fluidPage(
     fluidRow(
-        #javascript test
-        tags$script(HTML("var c = document.getElementById('courtPlot');var ctx = c.getContext('2d');
-                    ctx.beginPath();
-                    ctx.font = '30px Arial';
-                    ctx.fillText('Hello World', 10, 50);")),
         titlePanel("NBA Field Goal Analysis"),
         tags$p("Check out our:",
                tags$a(href = "https://github.com/patrick-osborne/CSML1000-Group_10-Final-Project/", "Github")),
@@ -78,7 +73,12 @@ ui <- fluidPage(
                                                      delay = 500,
                                                      delayType = "throttle"
                                                  )),
-                                     
+                                     #javascript test
+                                     tags$script(HTML("var c = document.getElementById('courtPlot');
+                                        var ctx = c.getContext('2d');
+                                        ctx.beginPath();
+                                        ctx.font = '30px Arial';
+                                        ctx.fillText('Hello World', 10, 50);"))
                                  )
                              )
                     )
@@ -99,7 +99,7 @@ server <- function(session, input, output) {
             contentType = "image/png",
             alt = "This is alternate text"
         )
-    })
+    }, deleteFile = FALSE)
     
     output$image_hoverinfo <- renderPrint({
         if(is.null(input$image_hover$x) && is.null(input$image_hover$y))
