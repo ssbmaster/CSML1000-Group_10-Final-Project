@@ -14,11 +14,13 @@ library(shinyWidgets)
 #library(stringr)
 library(raster)
 #library(png)
+library(caret)
+library(gbm)
 
 # Load the once per session stuff here; most efficient outside of server/ui functions
 
 #load the fitted Regression Tree model
-load("fittedRegTreeModel.RData")
+load("gbm_v2.RData")
 
 #load a blank data frame for the current shot (to predict with)
 load("individualShot.RData")
@@ -27,6 +29,7 @@ load("individualShot.RData")
 courtPlot <- "stockcourtCropResized800.jpg"
 #width of basketball court image in pixels
 widthCourt  <- 800
+heightCourt <- 425
 #scaling the values from pixels to feet based on 94 foot wide court
 scalingFactor <- 94/widthCourt
 
@@ -57,23 +60,23 @@ ui <- fluidPage(
                                      verbatimTextOutput("defenderPos"),
                                      verbatimTextOutput("distBasket"),
                                      verbatimTextOutput("defenderShooterDist"),
-                                     verbatimTextOutput("prediction")
+                                     tags$b(verbatimTextOutput("prediction"))
                                  ),
                                  
                                  # Show beautiful visuals to the right of the sidepanel!
                                  mainPanel(
-                                     h5(tags$b("Single-click to place the shooter.")),
-                                     h5(tags$b("Double-click to place the defender.")),
+                                     h4(tags$b("Single-click to place the shooter. Double-click to place the defender.")),
                                      imageOutput("courtPlot", 
                                                  click = "image_click",
                                                  dblclick = "dbl_click",
                                                  width = widthCourt,
+                                                 height = heightCourt,
                                                  hover = hoverOpts(
                                                      id = "image_hover",
                                                      delay = 500,
                                                      delayType = "throttle"
-                                                 ))
-                                 )
+                                                 )),
+                                     tags$a(href = "https://www.123rf.com/photo_24220420_a-realistic-vector-hardwood-textured-basketball-court-.html", "Court image courtesy of 123RF.com"))                               
                              )
                     )
         )
@@ -189,11 +192,11 @@ server <- function(session, input, output) {
             individualShot$CLOSE_DEF_DIST <- (pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
             
             #run the prediction with our current shot data frame
-            individualPredict <- predict(fit, individualShot, na.action=na.pass)
+            individualPredict <- predict(model_gbm, individualShot, na.action=na.pass, type="prob")
             output$prediction <- renderPrint({
-                cat("Predicted Value:\n")
-                cat(round(individualPredict,digits=2))
-                cat(" somethings")
+                cat("Predicted Likelihood of Scoring:\n")
+                cat(round(individualPredict$yes*100, digits=2))
+                cat("%")
             })
         })
         
