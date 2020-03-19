@@ -66,6 +66,7 @@ ui <- fluidPage(
                                  # Show beautiful visuals to the right of the sidepanel!
                                  mainPanel(
                                      h4(tags$b("Single-click to place the shooter. Double-click to place the defender.")),
+                                     h5(tags$i("You must place both players to get a prediction.")),
                                      imageOutput("courtPlot", 
                                                  click = "image_click",
                                                  dblclick = "dbl_click",
