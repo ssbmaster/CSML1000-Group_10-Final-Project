@@ -40,6 +40,11 @@ distanceDefender <- NULL
 # Define UI for application
 ui <- fluidPage(
     fluidRow(
+        #javascript test
+        tags$script(HTML("var c = document.getElementById('courtPlot');var ctx = c.getContext('2d');
+                    ctx.beginPath();
+                    ctx.font = '30px Arial';
+                    ctx.fillText('Hello World', 10, 50);")),
         titlePanel("NBA Field Goal Analysis"),
         tags$p("Check out our:",
                tags$a(href = "https://github.com/patrick-osborne/CSML1000-Group_10-Final-Project/", "Github")),
@@ -48,6 +53,7 @@ ui <- fluidPage(
                     tabPanel("Coach's Interface",
                              sidebarLayout(
                                  sidebarPanel(
+
                                       actionButton("reset",
                                                    "Reset All"),
                                      h4(" "),
