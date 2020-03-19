@@ -1,0 +1,270 @@
+> library(dplyr)
+> library(gbm)
+> library(caTools)
+> library(pROC)
+> library(doParallel)
+> library(caret)
+> library(MLmetrics)
+> 
+> # Read the data
+> shotDataRaw <- read.csv('../../data/shot_logs_clean_noNA_secondsclock.csv', header = TRUE, na.strings = c('NA','','#NA'))
+> 
+> #columns to keep
+> shotData <- shotDataRaw[
++   c(
++     'LOCATION', 
++     'PERIOD', 
++     'GAME_CLOCK', 
++     'SHOT_CLOCK', 
++     'DRIBBLES', 
++     'TOUCH_TIME', 
++     'SHOT_DIST', 
++     'PTS_TYPE', 
++     'CLOSEST_DEFENDER', 
++     #'CLOSEST_DEFENDER_PLAYER_ID',
++     'CLOSE_DEF_DIST',
++     'player_name',
++     'FGM'
++   )
++ ]
+> 
+> #scaling not required for gbm
+> #kdataunscaled <- shotData[, c("PERIOD", "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
+> #kdata <- scale(kdataunscaled)
+> 
+> #make sure columns are set as factor, ordered, or numerical
+> shotData$LOCATION <- as.factor(shotData$LOCATION)
+> shotData$PERIOD <- as.factor(shotData$PERIOD)
+> shotData$GAME_CLOCK <- as.numeric(shotData$GAME_CLOCK)
+> shotData$SHOT_CLOCK <- as.numeric(shotData$SHOT_CLOCK)
+> shotData$DRIBBLES <- as.numeric(shotData$DRIBBLES)
+> shotData$TOUCH_TIME <- as.numeric(shotData$TOUCH_TIME)
+> shotData$SHOT_DIST <- as.numeric(shotData$SHOT_DIST)
+> shotData$PTS_TYPE <- as.factor(shotData$PTS_TYPE)
+> shotData$CLOSEST_DEFENDER <- as.factor(shotData$CLOSEST_DEFENDER)
+> shotData$CLOSE_DEF_DIST <- as.numeric(shotData$CLOSE_DEF_DIST)
+> 
+> #gbm is a bit weird, doesn't accept 1 or 0, so we will convert FGM into "yes" or "no"
+> shotData$FGM <- as.factor(
++   ifelse(shotData$FGM == 0, "no", "yes")
++ )
+> 
+> 
+> #split the data into training and testing datasets
+> set.seed(123)
+> shotSample = sample.split(shotData$FGM, SplitRatio = 0.70)
+> shotTrain = subset(shotData, shotSample == TRUE)
+> shotTest = subset(shotData, shotSample == FALSE)
+> 
+> #set trainControl
+> #5-fold cross validation
+> gbm.trainControl = trainControl(
++   method = "cv", 
++   number = 5,
++   # Estimate class probabilities
++   classProbs = TRUE,
++   # Evaluate performance using the following function
++   summaryFunction = twoClassSummary,
++   allowParallel = TRUE,
++   verbose = TRUE
++ )
+> 
+> #tuneGrid for GBM
+> gbmGrid <- expand.grid(
++   #interaction.depth = c(10, 20),
++   #n.trees = c(50, 100, 250),
++   interaction.depth = c(5),
++   n.trees = c(40),
++   n.minobsinnode = 10,
++   shrinkage = .1
++ )
+> 
+> #train model
+> set.seed(123)
+> ptm_rf <- proc.time()
+> model_gbm <- train(
++   FGM ~ .,
++   #data = data[trainSlices[[1]],],
++   data = shotTrain,
++   #data = train_data,
++   method = "gbm",
++   #family="gaussian",
++   #distribution = "gaussian",
++   trControl = gbm.trainControl,
++   #tuneLength = 5
++   tuneGrid = gbmGrid
++ )
++ Fold1: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3652             nan     0.1000    0.0058
+     2        1.3555             nan     0.1000    0.0048
+     3        1.3477             nan     0.1000    0.0039
+     4        1.3411             nan     0.1000    0.0032
+     5        1.3354             nan     0.1000    0.0027
+     6        1.3304             nan     0.1000    0.0025
+     7        1.3260             nan     0.1000    0.0021
+     8        1.3224             nan     0.1000    0.0017
+     9        1.3191             nan     0.1000    0.0016
+    10        1.3165             nan     0.1000    0.0013
+    20        1.3021             nan     0.1000    0.0004
+    40        1.2935             nan     0.1000    0.0000
+
+- Fold1: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
++ Fold2: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3651             nan     0.1000    0.0059
+     2        1.3557             nan     0.1000    0.0047
+     3        1.3476             nan     0.1000    0.0040
+     4        1.3408             nan     0.1000    0.0034
+     5        1.3350             nan     0.1000    0.0027
+     6        1.3302             nan     0.1000    0.0024
+     7        1.3259             nan     0.1000    0.0020
+     8        1.3221             nan     0.1000    0.0018
+     9        1.3190             nan     0.1000    0.0014
+    10        1.3165             nan     0.1000    0.0012
+    20        1.3010             nan     0.1000    0.0003
+    40        1.2922             nan     0.1000    0.0000
+
+- Fold2: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
++ Fold3: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3651             nan     0.1000    0.0060
+     2        1.3552             nan     0.1000    0.0048
+     3        1.3468             nan     0.1000    0.0040
+     4        1.3403             nan     0.1000    0.0033
+     5        1.3341             nan     0.1000    0.0029
+     6        1.3293             nan     0.1000    0.0023
+     7        1.3254             nan     0.1000    0.0019
+     8        1.3216             nan     0.1000    0.0018
+     9        1.3184             nan     0.1000    0.0016
+    10        1.3157             nan     0.1000    0.0013
+    20        1.3007             nan     0.1000    0.0005
+    40        1.2919             nan     0.1000    0.0001
+
+- Fold3: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
++ Fold4: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3655             nan     0.1000    0.0058
+     2        1.3558             nan     0.1000    0.0049
+     3        1.3481             nan     0.1000    0.0038
+     4        1.3409             nan     0.1000    0.0035
+     5        1.3352             nan     0.1000    0.0028
+     6        1.3299             nan     0.1000    0.0026
+     7        1.3257             nan     0.1000    0.0020
+     8        1.3219             nan     0.1000    0.0018
+     9        1.3188             nan     0.1000    0.0014
+    10        1.3159             nan     0.1000    0.0013
+    20        1.3012             nan     0.1000    0.0004
+    40        1.2925             nan     0.1000    0.0000
+
+- Fold4: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
++ Fold5: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3652             nan     0.1000    0.0058
+     2        1.3558             nan     0.1000    0.0048
+     3        1.3478             nan     0.1000    0.0039
+     4        1.3409             nan     0.1000    0.0033
+     5        1.3349             nan     0.1000    0.0030
+     6        1.3300             nan     0.1000    0.0024
+     7        1.3256             nan     0.1000    0.0020
+     8        1.3222             nan     0.1000    0.0017
+     9        1.3191             nan     0.1000    0.0014
+    10        1.3161             nan     0.1000    0.0013
+    20        1.3019             nan     0.1000    0.0004
+    40        1.2931             nan     0.1000    0.0001
+
+- Fold5: interaction.depth=5, n.trees=40, n.minobsinnode=10, shrinkage=0.1 
+Aggregating results
+Fitting final model on full training set
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3652             nan     0.1000    0.0059
+     2        1.3555             nan     0.1000    0.0048
+     3        1.3476             nan     0.1000    0.0039
+     4        1.3406             nan     0.1000    0.0034
+     5        1.3348             nan     0.1000    0.0028
+     6        1.3298             nan     0.1000    0.0024
+     7        1.3259             nan     0.1000    0.0019
+     8        1.3222             nan     0.1000    0.0018
+     9        1.3193             nan     0.1000    0.0014
+    10        1.3164             nan     0.1000    0.0014
+    20        1.3015             nan     0.1000    0.0004
+    40        1.2929             nan     0.1000    0.0001
+
+There were 14 warnings (use warnings() to see them)
+> proc.time() - ptm_rf
+   user  system elapsed 
+ 599.14   22.84  623.67 
+> 
+> #make predictions aginst testData with the new model 
+> print(model_gbm)
+Stochastic Gradient Boosting 
+
+85937 samples
+   11 predictor
+    2 classes: 'no', 'yes' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold) 
+Summary of sample sizes: 68749, 68751, 68749, 68750, 68749 
+Resampling results:
+
+  ROC        Sens       Spec     
+  0.6407952  0.8688413  0.3213981
+
+Tuning parameter 'n.trees' was held constant at a value of 40
+Tuning parameter 'interaction.depth' was held constant at a value of 5
+Tuning parameter 'shrinkage'
+ was held constant at a value of 0.1
+Tuning parameter 'n.minobsinnode' was held constant at a value of 10
+> pred.model_gbm.prob = predict(model_gbm, newdata = shotTest, type="prob")
+> pred.model_gbm.raw = predict(model_gbm, newdata = shotTest)
+> 
+> 
+> roc.model_gbm = pROC::roc(
++   shotTest$FGM, 
++   as.vector(ifelse(pred.model_gbm.prob[,"yes"] >0.5, 1,0))
++ )
+Setting levels: control = no, case = yes
+Setting direction: controls < cases
+> auc.model_gbm = pROC::auc(roc.model_gbm)
+> print(auc.model_gbm)
+Area under the curve: 0.5941
+> 
+> #plot ROC curve
+> plot.roc(roc.model_gbm, print.auc = TRUE, col = 'red' , print.thres = "best" )
+> 
+> #generate confusion matrix, as well as other metrics such as accuracy, balanced accuracy
+> confusionMatrix(data = pred.model_gbm.raw, shotTest$FGM)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    no   yes
+       no  17477 11287
+       yes  2703  5362
+                                          
+               Accuracy : 0.6201          
+                 95% CI : (0.6152, 0.6251)
+    No Information Rate : 0.5479          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.197           
+                                          
+ Mcnemar's Test P-Value : < 2.2e-16       
+                                          
+            Sensitivity : 0.8661          
+            Specificity : 0.3221          
+         Pos Pred Value : 0.6076          
+         Neg Pred Value : 0.6648          
+             Prevalence : 0.5479          
+         Detection Rate : 0.4745          
+   Detection Prevalence : 0.7810          
+      Balanced Accuracy : 0.5941          
+                                          
+       'Positive' Class : no              
+                                          
+> 
+> #summary of model 
+> #summary(model_gbm)
+> 
+> # Save the model into a file
+> save(model_gbm, file="gbm.rda")

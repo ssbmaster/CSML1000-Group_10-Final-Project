@@ -1,0 +1,48 @@
++ Fold1: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=40 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3656             nan     0.1000    0.0058
+     2        1.3556             nan     0.1000    0.0050
+     3        1.3473             nan     0.1000    0.0040
+     4        1.3403             nan     0.1000    0.0034
+     5        1.3346             nan     0.1000    0.0028
+     6        1.3297             nan     0.1000    0.0023
+     7        1.3257             nan     0.1000    0.0019
+     8        1.3223             nan     0.1000    0.0016
+     9        1.3193             nan     0.1000    0.0015
+    10        1.3165             nan     0.1000    0.0013
+    20        1.3016             nan     0.1000    0.0004
+    40        1.2926             nan     0.1000    0.0000
+
+- Fold1: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=40 
++ Fold1: shrinkage=0.1, interaction.depth=10, n.minobsinnode=10, n.trees=40 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3642             nan     0.1000    0.0063
+     2        1.3538             nan     0.1000    0.0052
+     3        1.3444             nan     0.1000    0.0045
+     4        1.3373             nan     0.1000    0.0036
+     5        1.3309             nan     0.1000    0.0030
+     6        1.3256             nan     0.1000    0.0026
+     7        1.3211             nan     0.1000    0.0021
+     8        1.3172             nan     0.1000    0.0018
+     9        1.3136             nan     0.1000    0.0016
+    10        1.3105             nan     0.1000    0.0013
+    20        1.2956             nan     0.1000    0.0003
+    40        1.2865             nan     0.1000    0.0000
+
+- Fold1: shrinkage=0.1, interaction.depth=10, n.minobsinnode=10, n.trees=40 
++ Fold2: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=40 
+Iter   TrainDeviance   ValidDeviance   StepSize   Improve
+     1        1.3654             nan     0.1000    0.0058
+     2        1.3558             nan     0.1000    0.0047
+     3        1.3478             nan     0.1000    0.0039
+     4        1.3411             nan     0.1000    0.0032
+     5        1.3357             nan     0.1000    0.0027
+     6        1.3310             nan     0.1000    0.0023
+     7        1.3268             nan     0.1000    0.0019
+     8        1.3232             nan     0.1000    0.0017
+     9        1.3201             nan     0.1000    0.0014
+    10        1.3176             nan     0.1000    0.0012
+    20        1.3026             nan     0.1000    0.0005
+    40        1.2935             nan     0.1000    0.0000
+
+- Fold2: shrinkage=0.1, interaction.depth= 5, n.minobsinnode=10, n.trees=40
