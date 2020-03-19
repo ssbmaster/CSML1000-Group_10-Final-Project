@@ -5,7 +5,7 @@ library(rpart.plot)
 library(pROC)
 
 # Read the data
-shotDataRaw <- read.csv('../../data/shot_longs_clean_noNA_secondsclock.csv', header = TRUE, na.strings = c('NA','','#NA'))
+shotDataRaw <- read.csv('../../data/shot_logs_clean_noNA_secondsclock.csv', header = TRUE, na.strings = c('NA','','#NA'))
 
 #columns to keep
 shotData <- shotDataRaw[
@@ -59,6 +59,27 @@ fit <- rpart(FGM ~ ., shotTrain, method="anova")
 fit$cptable[which.min(fit$cptable[,"xerror"]),"CP"]
 prune(fit, cp=0.01)
 predictedValues <- predict(fit, shotTest)
+
+#for predicting individual shots with the data that we specify
+individualShot <- shotTest[1,]
+individualShot[,]=NA
+individualShot$LOCATION <- as.factor(individualShot$LOCATION)
+individualShot$PERIOD <- as.factor(individualShot$PERIOD)
+individualShot$GAME_CLOCK <- as.numeric(individualShot$GAME_CLOCK)
+individualShot$SHOT_CLOCK <- as.numeric(individualShot$SHOT_CLOCK)
+individualShot$DRIBBLES <- as.numeric(individualShot$DRIBBLES)
+individualShot$TOUCH_TIME <- as.numeric(individualShot$TOUCH_TIME)
+individualShot$SHOT_DIST <- as.numeric(individualShot$SHOT_DIST)
+individualShot$PTS_TYPE <- as.factor(individualShot$PTS_TYPE)
+individualShot$CLOSEST_DEFENDER <- as.factor(individualShot$CLOSEST_DEFENDER)
+individualShot$CLOSE_DEF_DIST <- as.numeric(individualShot$CLOSE_DEF_DIST)
+individualShot$player_name <- as.factor(individualShot$player_name)
+individualShot$FGM <- as.factor(individualShot$FGM)
+save(individualShot, file="individualShot.RData")
+individualShot$SHOT_DIST <- 0
+individualShot$CLOSE_DEF_DIST <- 5
+individualPredict <- predict(fit, individualShot, na.action=na.pass)
+print(individualPredict)
 
 #define function
 splitfun <- function(x, labs, digits, varlen, faclen)
