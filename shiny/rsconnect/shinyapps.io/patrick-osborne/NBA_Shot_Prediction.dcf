@@ -5,9 +5,9 @@ account: patrick-osborne
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1969248
-bundleId: 2900595
+bundleId: 2901171
 url: https://patrick-osborne.shinyapps.io/NBA_Shot_Prediction/
-when: 1584674990.69044
+when: 1584694602.81672
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: archive

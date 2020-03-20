@@ -258,7 +258,7 @@ We chose a number of supervised machine learning models to predict the number of
 *	GBM with PCA
 
 Before running the models, we converted the predictors and response variable to their correct data type. For example, numeric factors such as SHOT_DIST were explicitly converted into numeric, while categorical factors such as FGM were explicitly converted into categorical factors. Because the binary response variables of, 0 and 1, showcased a relatively balanced dataset, with the split being roughly 55%/45%, we did not need to undersample or oversample the data.  
-We also split the dataset into a training, and testing set. The split was set at 70% training, and 30% training, ensuring an equal 
+We also split the dataset into a training, and testing set. The split was set at 70% testing, and 30% training, ensuring a balanced split.
 
 \clearpage
 ### Decision Tree

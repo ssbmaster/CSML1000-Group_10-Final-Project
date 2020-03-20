@@ -240,7 +240,7 @@ server <- function(session, input, output) {
         
         output$defenderShooterDist <- renderPrint({
             cat("Distance from Shooter to Closest Defender: ")
-            cat(round(distanceDefender,digits=2))
+            cat(round((pointDistance(c(defenderX, defenderY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor,digits=2))
             cat(" feet")
             
             
@@ -302,7 +302,7 @@ server <- function(session, input, output) {
         
         output$defenderShooterDist <- renderPrint({
             cat("Distance from Shooter to Closest Defender: ")
-            cat(round(distanceDefender,digits=2))
+            cat(round((pointDistance(c(defenderX, defenderY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor,digits=2))
             cat(" feet")
             
         })
