@@ -1,0 +1,13 @@
+name: NBA_Shot_Prediction
+title: NBA_Shot_Prediction
+username:
+account: patrick-osborne
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1969248
+bundleId: 2900595
+url: https://patrick-osborne.shinyapps.io/NBA_Shot_Prediction/
+when: 1584674990.69044
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: archive
