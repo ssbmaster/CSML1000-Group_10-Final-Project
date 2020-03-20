@@ -79,7 +79,7 @@ for(i in 1:length(gameClock)){
 ```
 
 ### Names
-To further handle player names in this exercise, all names are standardized to read as "First Name" followed by "Last Name". A custom function was written to achieve this result. 
+To further handle player names in this exercise, all names are standardized to read as "Last Name, " followed by "First Name". A custom function was written to achieve this result. 
 
 ```{r, NAME FUNCTION, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
 nameformatreverse <- function(s) {
@@ -180,65 +180,91 @@ plotcluster(kdataunscaled, kmm.2$cluster)
 plotcluster(kdataunscaled, kmm.3$cluster)
 plotcluster(kdataunscaled, kmm.4$cluster)
 ```
-K2 plots
+
+### Clustering Comparison Plots (k=2, k=3, k=4)
+For 3 different values of k (# of clusters), k=2, k=3, k=4 we plot the following 5 plots, so that we can compare and choose the best number of clusters.
+
+* Plot 1: A simple visual represenation of the clusters, based on their principal components
+* Plot 2: Dribbles and Shot Distance grouped by Field Goal Made
+* Plot 3: Dribbles, Shot Distance, grouped by Field Goal Made and grouped by Periods
+* Plot 4: Shot Distance, Closest Defender Distance grouped by Field Goal Made
+* Plot 5: Shot Distance, Closest Defender Distance grouped by Field Goal Made and grouped by Periods
+
+### k=2 plots
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 k2a <- ggdraw() + draw_image("../plots/k2dcClusterUnscaled.png")
 k2b <- ggdraw() + draw_image("../plots/k2dribblesVshotdist+fgm.png")
 k2c <- ggdraw() + draw_image("../plots/k2dribblesVshotdist+fgmVperiod.png")
 k2d <- ggdraw() + draw_image("../plots/k2shotdistVclosedefdist+fgm.png")
 k2e <- ggdraw() + draw_image("../plots/k2shotdistVclosedefdist+fgmVperiod.png")
-plot_grid(k2a, k2b, k2c, k2d, k2e)
+k2a
+grid.arrange(k2b, k2c, k2d, k2e)
+
 ```
 
-k3 plots
+### k=3 plots
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 k3a <- ggdraw() + draw_image("../plots/k3dcClusterUnscaled.png")
 k3b <- ggdraw() + draw_image("../plots/k3dribblesVshotdist+fgm.png")
 k3c <- ggdraw() + draw_image("../plots/k3dribblesVshotdist+fgmVperiod.png")
 k3d <- ggdraw() + draw_image("../plots/k3shotdistVclosedefdist+fgm.png")
 k3e <- ggdraw() + draw_image("../plots/k3shotdistVclosedefdist+fgmVperiod.png")
-grid.arrange(k3a, k3b, k3c, k3d, k3e)
+k3a
+grid.arrange(k3b, k3c, k3d, k3e)
 ```
 
-k4 plots
+### k=4 plots
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 k4a <- ggdraw() + draw_image("../plots/k4dcClusterUnscaled.png")
 k4b <- ggdraw() + draw_image("../plots/k4dribblesVshotdist+fgm.png")
 k4c <- ggdraw() + draw_image("../plots/k4dribblesVshotdist+fgmVperiod.png")
 k4d <- ggdraw() + draw_image("../plots/k4shotdistVclosedefdist+fgm.png")
 k4e <- ggdraw() + draw_image("../plots/k4shotdistVclosedefdist+fgmVperiod.png")
-plot_grid(k4a, k4b, k4c, k4d, k4e)
+k4a
+grid.arrange(k4b, k4c, k4d, k4e)
 ```
 
-We chose a number of supervised machine learning models to predict the number of field goals made. We ran, evaluated, and compared the performance of the following models:
-* Decision Tree
-* Logistic Regression
-*	GBM
-*	GBM with PCA
-Before running the models, we converted the predictors and response variable to their correct data type. For example, numeric factors such as SHOT_DIST were explicitly converted into numeric, while categorical factors such as FGM were explicitly converted into categorical factors. Because the binary response variables of, 0 and 1, showcased a relatively balanced dataset, with the split being roughly 55%/45%, we did not need to undersample or oversample the data.  
-We also split the dataset into a training, and testing set. The split was set at 70% training, and 30% training, ensuring an equal 
-
 ### Principal Component Analysis
+Principle Component Analysis was used to see if there were any features that were highly correlated, so that some of them could be merged into Principle Components without significant data loss. The PCA algorithm identified 8 important numeric features in the dataset. Using PCA to combine these features, we obtained eight principle components (PC1-PC8). Investigating the components further, we determined that the PC1 and PC2 features were responsible for almost 50% of the variance in the data. PC3 through to PC8 were responsible for the other 50%.
+
+The biplot of PC1 against PC2 (shown below) displays arrow vectors for each feature in the original data set. The length of the arrow indicates the significance of the feature towards the PC1 and PC2 components. The distance from one line to another, explains the correlation of the features in question.
+
+* Looking at the graph, we can see that GAME_CLOCK and SHOT_CLOCK are highly correlated but have minimal effect on PC1 and PC2.
+* We see correlation between CLOSE_DEF_DIST and SHOT_DIST. Both of these features have a medium impact on both PC1 and PC2. 
+* Some correlation is seen between SHOT_NUMBER and PERIOD. Both of these features have a significant effect on both PC1 and PC2.
+* Lastly, the highly correlated TOUCH_TIME and DRIBBLE have a significant effect on the combined features.
+
+Having conducted this analysis, we have learned a bit more about the individual features and how they impact our data, and therefore our prediction. We will use this information to choose what features we expose to the user through our application. For instance, exposing either TOUCH_TIME or DRIBBLE would likely have similar effect, so we may simply pick one of them. This is also a good rough measure of the significance of each feature.
+
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 pca <- ggdraw() + draw_image("../plots/pcaBiplot.png")
 plot_grid(pca)
 ```
 
+## Supervised Learning Models
 
+We chose a number of supervised machine learning models to predict the number of field goals made. We ran, evaluated, and compared the performance of the following models:
+
+* Decision Tree
+* Logistic Regression
+*	GBM
+*	GBM with PCA
+
+Before running the models, we converted the predictors and response variable to their correct data type. For example, numeric factors such as SHOT_DIST were explicitly converted into numeric, while categorical factors such as FGM were explicitly converted into categorical factors. Because the binary response variables of, 0 and 1, showcased a relatively balanced dataset, with the split being roughly 55%/45%, we did not need to undersample or oversample the data.  
+We also split the dataset into a training, and testing set. The split was set at 70% training, and 30% training, ensuring an equal 
+
+\clearpage
 ### Decision Tree
 The Decision tree algorithm is an algorithm that uses a tree-like data structure to make either predictions for regression, or classification problems. Given the business problem and context, a categorical variable decision tree was chosen as we wanted to classify, given the available data, whether or not an attempted shot made became a FGM (Field Goal Made); in this particular situation, there would be two categories for the response variable: either 0, denoting an attempted shot that missed, or 1, denoting an attempted shot that resulted in a field goal. A decision tree is suitable supervised machine learning algorithm because it is fairly easy to explain and visualize. For example, the following figure below is the generated decision tree diagram. Shot Distance, titled as SHOT_DIST, as well as the distance to the closest defender, titled as CLOSE_DEF_DIST, were the two most important variables in the decision tree, and of which the decisions are based upon. 
 
-```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
-dectree <- ggdraw() + draw_image("../models/Decision Tree/decision_tree_tree.png")
-plot_grid(dectree)
-```
+![Decision Tree Visual]("../models/Decision Tree/decision_tree_tree.png")
 
 The ROC curve, and AUC of the decision tree algorithm showed similar results to the other models, as seen in the figure below. Nevertheless, it was decided not to use the decision tree algorithm as the model only showed 3 raw probabilities given the different permutations of SHOT_DIST and CLOSE_DEF_DIST. This would not have looked good on the Shiny app, as we wanted to show more probabilities on a more granular level, as there were other predictor variables that were not being used in the final model. 
 
-```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
-roc <- ggdraw() + draw_image("../models/Decision Tree/decision_tree_AUC.png")
-plot_grid(roc)
-```
+![Decision Tree AUC]("../models/Decision Tree/decision_tree_AUC.png")
+
+
+\clearpage
 ### Logistic Regression
 Logistic Regression is a parametric model used for binary classification, and it is based off the logit (logistic) function, hence the name. There are a few assumptions that were made with logistic regression: 
 *	There is a large enough dataset to make accurate predictions
@@ -248,10 +274,7 @@ Logistic Regression is a parametric model used for binary classification, and it
 *	Minimal multicollinearity among the predictor variables
 All assumptions except (4) and (5) are true, and due to the lack of time on our part, we were unable to ascertain whether the last two assumptions were, indeed, true. The results for the logistic regression showed similar results to other models. Listed below is the ROC curve/AUC results of the logistic regression model. 
 
-```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
-logi <- ggdraw() + draw_image("../models/GLM/glm_auc_roc.png")
-logi
-```
+![GLM AUC]("../models/GLM/glm_auc_roc.png")
 
 In terms of other metrics like accuracy, balanced accuracy, sensitivity, and specificity, the logistic regression model also showed similar results to the other models. Unfortunately, logistic regression took the longest amount of time to train compared to all the other models, at 2.5 hours. Listed below are the other metrics, as well as the runtime of the logistic regression model. 
 
@@ -323,18 +346,15 @@ Also, including the features CLOSEST_DEFENDER_PLYAER_ID and player_name made the
 
 Listed below is the ROC curve, and AUC value for GBM without CLOSEST_DEFENDER_PLAYER_ID, and player_name predictor variables. Also listed below is the console output of training the GBM model, showing some of the metrics from the test dataset. Overall, the GBM model did the best compared to the other models, although not by a huge margin. It had an accuracy of 62.01%, a sensitivity of 0.8661 which were the highest of all the models. Unfortunately, its specificity was at the lower end compared to other models at 0.3221
 
-```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
-gbm <- ggdraw() + draw_image("../models/GBM/roc_auc_gbm.png")
-plot_grid(gbm)
-```
+![GBM AUC]("../models/GBM/roc_auc_gbm.png")
 
+\clearpage
 ### Stochastic Gradient Boosting (GBM) with PCA
 We also chose to perform GBM with the results generated from PCA. We used all 8 of the components for the GBM model. Listed below was the variable importance of each component: 
 
-```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
-gbmpca <- ggdraw() + draw_image("../models/GBM (PCA Data Set)/relative_importance.jpg")
-plot_grid(gbmpca)
-```
+
+![GBM with PCA AUC]("../models/GBM (PCA Data Set)/relative_importance.jpg")
+
 Listed below are the metrics of the GBM with PCA. Overall the GBM with PCA model was fairly competitive with the previous GBM model, as it scored 61.58% accuracy, and a 0.8035 sensitivity. Its specificity was a bit better than the previous GBM model at 0.3884. In terms of runtime both GBM models were fairly similar with a training duration of around 10 minutes.
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 gbmpcaroc <- ggdraw() + draw_image("../models/GBM (PCA Data Set)/roc_auc.jpg")
@@ -420,6 +440,24 @@ PC7 PC7  1.287303
 X     X  1.014465
 ```
 
-## EVALUATION
+## EVALUATION AND CONCLUSION
+
+```{r AUC-comparison, echo=FALSE, message=FALSE, warning=FALSE, fig.align="center", fig.cap="AUC Comparison"}
+ALG <- c("Decision Tree", "Logistic Reg.", "GBM", "GBM with PCA")
+AUC_VAL = c(0.594, 0.595, 0.594, 0.596)
+AUC <- data.frame(ALG, AUC_VAL)
+AUC <- AUC[order(AUC$AUC_VAL),]
+plotAUC <- ggplot(AUC, aes(x=AUC$ALG, y=AUC$AUC_VAL)) +
+  geom_bar(stat = "identity", position = 'dodge', fill=fillColour[1], colour=outlineColour[1], alpha = 0.4) +
+  xlab("ML Model") + ylab("AUC") + labs(title = "AUC Comparison") +
+  geom_text(aes(label=AUC$AUC_VAL), position=position_dodge(width=0.9), vjust=-0.25)
+plotAUC
+```
 
 All models performed fairly similarly in terms of metrics, such as ROC, AUC, Accuracy, Balanced Accuracy, Sensitivity, and Specificity. In terms of overall performance, the models were not spectacular: they showed an accuracy, balanced accuracy, and AUC of around 0.60, sensitivity of around 70% to 80%, and a specificity of 30% to 40%. Nevertheless, there were some positives to be noted: although the model was only 10% better than chance, the sensitivity of all models was quite high at 70% to 80%. This meant that the model was fairly good at correctly predicting the percentage of actual positive cases (i.e FGM); on the flip side,  all models had fairly poor specificity, meaning the models were not so good at correctly predicting the percentage of actual negative cases (i.e. shots that missed). 
+
+## ETHICAL CONSIDERATIONS
+
+As with any dataset that includes specific data on real people - we must carefully consider the impact of our predictions on individuals. We have specifically chosen to exclude player name and defender from from our application in consideration of possible discrimination against individual players. Instead, we present our application as a generic tool to be used for any kind of basketball decision making (i.e. determining the best positioning, post-game review, testing new strategies, etc.)- not to judge specific players.
+
+When using our application to predict shot percentages, it is important to remember the data set on which it is based. As a purely NBA dataset, it is only applicable to NBA players and should be used to generalize to other leagues such as the NCAA or WNBA where player characteristics, court specifics, rules, etc. may be different. There is risk in this predictive model being applied incorrectly, which is why we have tried to explicitly specify that this is an NBA predictor only.
