@@ -1,0 +1,224 @@
+---
+title: "NBA Data Analysis"
+author: "Alex Fung, Patrick Osborne, Tony Lee, Viswesh Krishnamurthy"
+date: "14/03/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Loading Libraries
+library(tidyverse)
+library(mclust)
+library(chron)
+library(lubridate)
+library(kableExtra)
+library(xtable)
+library(ggplot2)
+library(RColorBrewer)
+library(gridExtra)
+library(cowplot)
+library(magick)
+outlineColour = brewer.pal(9, "Set1") #colour palette for outlining graphs
+fillColour = brewer.pal(9, "Pastel1") #colour palette for filling graphs
+```
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE, error = FALSE}
+initialData <- as_tibble(read.csv('../data/shot_logs.csv', header = TRUE, na.strings = c('NA','','#NA'), stringsAsFactors = FALSE))
+```
+
+## ABSTRACT
+
+The use of various predictive metrics in sports has been occurring as long as human beings have watched each other compete. Initially this started out as simple gut feeling or a subjective assessment of the competitors – the bets usually go to the bigger fighter! In more recent times, humanity has refined its predictive power with the advent of statistics and logical decision making (famously put to use in Major League Baseball, as shown in the film Moneyball). With the advent of the information age and the possibility for large-scale data analytics and machine learning, the National Basketball Association has decided to puruse this analysis to better understand player matchups (defender vs offender) and to assess & optimize shooter performance. 
+
+## BUSINESS UNDERSTANDING 
+Detailed statistics are already available to the NBA as these have been tracked for many years, supporting classic statistical decision making. The goal is to run both unsupervised and supervised machine learning algorithms on the statistical data available. In technical terms, we aim to deliver predictive metrics for threat/benefit level at an individual player level, as well as an interactive application that identifies the likelihood of a shot landing from a specific offender shooting from a specific position on the court, against a specific defender located a certain distance away. This will allow coaches to run limited scenarios in the predictive model, to inform both their practice routines and to assist in making strategic decisions during live games.
+
+As an example, consider the matchup of Lebron James on offence and Serge Ibaka on defence. Let’s assume that Lebron typically tries to shoot from top of the key, and is being defended by Serge Ibaka, 5 feet away. The model takes these discrete inputs and outputs a real-world percentage success of 10.5% (example). If the average shooting success rate is 30%, we can identify this as a bad shot, and encourage Lebron to pass in these situations.
+
+## DATA UNDERSTANDING
+We begin with understanding each feature available in the data. The available data set is data of all shots attempted at NBA games between 2014 and 2015. For each shot attempted, the most important outcome of that attempt, whether the shot was made or missed is available. This is seen in 2 columns SHOT_RESULTS and FGM. FGM stands for "Field Goal Made". In support of this outcome, there are a number of other data points to be seen, like the player who attempted the shot and who defended the sho, how far away was the defender, how far away from the basket was the shot attempted, was the match at home or away etc. With that data understanding, let's look at the "head" of the data. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,  results='asis', fig.align="center", fig.cap="Summary Tables of All Features"}
+options(xtable.comment = FALSE)
+options(xtable.floating = TRUE)
+print(xtable(head(initialData)[,1:8]), include.rownames = FALSE, scalebox=0.7)
+print(xtable(head(initialData)[,9:15]), include.rownames = FALSE, scalebox=0.7)
+```
+```{r, data-dictionary, echo = FALSE, results = 'asis'}
+data_dictionary <- read.csv('../data/data dictionary.csv')
+kable(data_dictionary[], caption = "Data Dictionary - NBA Data", format = "latex") %>%  kable_styling(latex_options="scale_down")
+```
+### Plots
+We attempt to further understand the data using the following plots. A histogram of the "closest defender distance" shows that a majority of the shots were defended from within 5 feet of the player attempting the shot and it is safe to say that more than 90% of the shots were defended from within 10 feet. The "dribbles count" shows that most of the shots were attempted soon after getting the ball and that more than 80% of the shots were attempted within 3 dribbles. "Final Margin" histogram shows that most matches were won or lost within a 15 point margin. The "Shot distance" histogram shows that most of the shots were attempted from "top of the key" and followed by 2 to 4 feet range from the basket
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center", fig.width=5}
+p1 <- ggdraw() + draw_image("../plots/closestDefDistHistogram.png")
+p2 <- ggdraw() + draw_image("../plots/dribblesHistogram.png")
+p3 <- ggdraw() + draw_image("../plots/finalMarginHistogram.png")
+p4 <- ggdraw() + draw_image("../plots/shotDistanceHistogram.png")
+plot_grid(p1,p2,p3,p4)
+```
+
+## DATA PREPARATION
+### SHOT_CLOCK
+Looking at the data, some of the NA values need to be dealt with. The "SHOT_CLOCK" column has some NA values and the assumption is that the SHOT_CLOCK was equal to the GAME_CLOCK and therefore it may not be recorded. For such cases, the GAME_CLOCK is assumed to be equal to SHOT_CLOCK.
+
+```{r, SHOT_CLOCK, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+cleanData <- initialData
+gameClock <- as.vector(second(fast_strptime(cleanData$GAME_CLOCK, "%M:%S"))) + 
+  as.vector(minute(fast_strptime(cleanData$GAME_CLOCK, "%M:%S"))) * 60
+shotClock <- is.na(initialData$SHOT_CLOCK)
+for(i in 1:length(gameClock)){
+  if(shotClock[i] & gameClock[i] < 25){
+    cleanData$SHOT_CLOCK[i] <- gameClock[i]
+  }
+}
+```
+
+### Names
+To further handle player names in this exercise, all names are standardized to read as "First Name" followed by "Last Name". A custom function was written to achieve this result. 
+
+```{r, NAME FUNCTION, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+nameformatreverse <- function(s) {
+  fname <- str_extract(s, "^\\w+")
+  lname <- str_extract(s, "\\w+$")
+  s <- paste(lname, fname, sep = ", ")
+}
+```
+
+All Shooter & Defender names are then put through the function to standardize names
+
+```{r, SHOOTER NAME, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+shooterName <- cleanNoNAData$player_name
+shooterName <- toupper(shooterName)
+shooterName <- nameformatreverse(shooterName)
+```
+
+```{r, DEFENDER NAME, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+cleanNoNAData$player_name <- shooterName
+cleanNoNAData$CLOSEST_DEFENDER <- toupper(cleanNoNAData$CLOSEST_DEFENDER)
+cleanNoNAData$CLOSEST_DEFENDER <- gsub("[.]", "", cleanNoNAData$CLOSEST_DEFENDER)
+```
+
+### Game Clock
+It makes best sense to have the GAME_CLOCK expressed in seconds. 
+
+```{r, GAME_CLOCK SECS, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+cleanNoNASecondsClockData <- cleanNoNAData
+cleanNoNASecondsClockData$GAME_CLOCK <- 
+  as.vector(second(fast_strptime(cleanNoNAData$GAME_CLOCK, "%M:%S"))) + 
+  as.vector(minute(fast_strptime(cleanNoNAData$GAME_CLOCK, "%M:%S"))) * 60
+```
+
+### Touch time
+Any row that has TOUCH_TIME less than 0.1 seconds is not right and hence are omitted
+
+```{r, TOUCH_TIME, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+cleanNoNASecondsClockData <- cleanNoNASecondsClockData[cleanNoNASecondsClockData$TOUCH_TIME > 0, ]
+```
+
+## MODELLING
+
+### K-Means Clustering
+The Elbow method is a popular, non computation intensive process of determining the most optimal number of clusters for a dataset by looking at a dropoff of variance.  The other methods, eg, Bayesian Inference which we ran is more computation intensive, and produced optimal clusters that didnt agree with the visual Elbow method.Therefore, after plotting and analyzing a few different features against each other and highlighting the clusters by colouring the datapoints, we find that 3 clusters is likely the best compromise for the important features, namely, shot distance and closest defender distance.
+
+To perform clustering, only the numeric columns from the data are selected. 
+```{r, DATA SELECT, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+kdataunscaled <- cleanNoNASecondsClockData[, c("SHOT_NUMBER", "PERIOD", 
+                                               "GAME_CLOCK", "SHOT_CLOCK", "DRIBBLES", 
+                                               "TOUCH_TIME", "SHOT_DIST", "CLOSE_DEF_DIST")]
+kdata <- scale(kdataunscaled)
+```
+
+We use the 'Elbow' method to determine the ideal number of clusters
+```{r, ELBOW, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+set.seed(123)
+# Compute and plot wss for k = 1 to k = 15
+k.max <- 10
+wss <- sapply(1:k.max, function(k){kmeans(kdata, k, nstart=50,iter.max = 15 )$tot.withinss})
+wss
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE,
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+```
+
+The "number of clusters" vs "sum of squares" plot helps us identify the 'Elbow' and decide on the right number of clusters. From the plot, we will try creating clusters with k = 2,3 & 4
+
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
+p5 <- ggdraw() + draw_image("../plots/ElbowMethodCluster.png")
+plot_grid(p5)
+```
+
+Bayesian Inference Criterion for k means to validate choice from Elbow Method
+```{r, BAYESIAN, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+d_clust <- Mclust(as.matrix(kdata), G=1:10,
+                  modelNames = mclust.options("emModelNames"))
+d_clust$BIC
+plot(d_clust)
+
+# Let us apply kmeans for k=2 clusters 
+kmm.2 <- kmeans(kdata, 2, nstart = 50, iter.max = 15)
+# Let us apply kmeans for k=3 clusters 
+kmm.3 <- kmeans(kdata, 3, nstart = 50, iter.max = 15) 
+# Let us apply kmeans for k=3 clusters 
+kmm.4 <- kmeans(kdata, 4, nstart = 50, iter.max = 15) 
+# We keep number of iter.max=15 to ensure the algorithm converges and nstart=50 to
+# Ensure that atleat 50 random sets are choosen
+kmm.2
+kmm.3
+kmm.4
+
+# Plot the clusters
+clusplot(kdataunscaled, kmm.3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+# Centroid Plot against 1st 2 discriminant functions
+plotcluster(kdataunscaled, kmm.2$cluster)
+plotcluster(kdataunscaled, kmm.3$cluster)
+plotcluster(kdataunscaled, kmm.4$cluster)
+```
+K2 plots
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
+k2a <- ggdraw() + draw_image("../plots/k2dcClusterUnscaled.png")
+k2b <- ggdraw() + draw_image("../plots/k2dribblesVshotdist+fgm.png")
+k2c <- ggdraw() + draw_image("../plots/k2dribblesVshotdist+fgmVperiod.png")
+k2d <- ggdraw() + draw_image("../plots/k2shotdistVclosedefdist+fgm.png")
+k2e <- ggdraw() + draw_image("../plots/k2shotdistVclosedefdist+fgmVperiod.png")
+plot_grid(k2a, k2b, k2c, k2d, k2e)
+```
+
+k3 plots
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
+k3a <- ggdraw() + draw_image("../plots/k3dcClusterUnscaled.png")
+k3b <- ggdraw() + draw_image("../plots/k3dribblesVshotdist+fgm.png")
+k3c <- ggdraw() + draw_image("../plots/k3dribblesVshotdist+fgmVperiod.png")
+k3d <- ggdraw() + draw_image("../plots/k3shotdistVclosedefdist+fgm.png")
+k3e <- ggdraw() + draw_image("../plots/k3shotdistVclosedefdist+fgmVperiod.png")
+plot_grid(k3a, k3b, k3c, k3d, k3e)
+```
+
+k4 plots
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
+k4a <- ggdraw() + draw_image("../plots/k4dcClusterUnscaled.png")
+k4b <- ggdraw() + draw_image("../plots/k4dribblesVshotdist+fgm.png")
+k4c <- ggdraw() + draw_image("../plots/k4dribblesVshotdist+fgmVperiod.png")
+k4d <- ggdraw() + draw_image("../plots/k4shotdistVclosedefdist+fgm.png")
+k4e <- ggdraw() + draw_image("../plots/k4shotdistVclosedefdist+fgmVperiod.png")
+plot_grid(k4a, k4b, k4c, k4d, k4e)
+```
+
+We chose a number of supervised machine learning models to predict the number of field goals made. We ran, evaluated, and compared the performance of the following models:
+* Decision Tree
+* Logistic Regression
+*	GBM
+*	GBM with PCA
+Before running the models, we converted the predictors and response variable to their correct data type. For example, numeric factors such as SHOT_DIST were explicitly converted into numeric, while categorical factors such as FGM were explicitly converted into categorical factors. Because the binary response variables of, 0 and 1, showcased a relatively balanced dataset, with the split being roughly 55%/45%, we did not need to undersample or oversample the data.  
+We also split the dataset into a training, and testing set. The split was set at 70% training, and 30% training, ensuring an equal 
+
+## Decision Tree
+The Decision tree algorithm is an algorithm that uses a tree-like data structure to make either predictions for regression, or classification problems. Given the business problem and context, a categorical variable decision tree was chosen as we wanted to classify, given the available data, whether or not an attempted shot made became a FGM (Field Goal Made); in this particular situation, there would be two categories for the response variable: either 0, denoting an attempted shot that missed, or 1, denoting an attempted shot that resulted in a field goal. A decision tree is suitable supervised machine learning algorithm because it is fairly easy to explain and visualize. For example, the following figure below is the generated decision tree diagram. Shot Distance, titled as SHOT_DIST, as well as the distance to the closest defender, titled as CLOSE_DEF_DIST, were the two most important variables in the decision tree, and of which the decisions are based upon. 
+
+```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
+dectree <- ggdraw() + draw_image("../soure/models/Decision Tree/k4shotdistVclosedefdist+fgmVperiod.png")
+plot_grid(dectree)
+```
