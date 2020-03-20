@@ -250,12 +250,12 @@ All assumptions except (4) and (5) are true, and due to the lack of time on our 
 
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 logi <- ggdraw() + draw_image("../models/GLM/glm_auc_roc.png")
-plot_grid(logi)
+logi
 ```
 
 In terms of other metrics like accuracy, balanced accuracy, sensitivity, and specificity, the logistic regression model also showed similar results to the other models. Unfortunately, logistic regression took the longest amount of time to train compared to all the other models, at 2.5 hours. Listed below are the other metrics, as well as the runtime of the logistic regression model. 
 
-```{r, LOGISTIC, echo = FALSE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
+```{r, LOGISTIC, echo = TRUE, eval = FALSE, error = FALSE, message = FALSE, warning = FALSE, results = "hide"}
 Confusion Matrix and Statistics
 
           Reference
@@ -283,8 +283,9 @@ Prediction    no   yes
                                          
        'Positive' Class : no   
 ```
+
 \clearpage
-\newpage
+
 ### Stochastic Gradient Boosting (GBM)
 Stochastic Gradient Boosting is a relatively complex supervised learning algorithm. The algorithm continuously iterates through several trees, at one at a time, so that it can boost the performance of its weakest learners. 
 
