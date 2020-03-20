@@ -1,0 +1,11 @@
+Abstract - Patrick [VIS]
+Business Und. - Patrick [VIS]
+Data Understanding - Vis [PATRICK]
+Plots - Patrick [PATRICK]
+Data Prep - Tony [TONY]
+Clustering - Tony [TONY]
+PCA - Vis [PATRICK]
+Models - Alex [ALEX]
+Evaluation and Ethical - Vis [PATRICK]
+
+Shiny - Patrick [PATRICK]
