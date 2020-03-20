@@ -5,7 +5,7 @@ library(caret)
 library(e1071)
 
 # Read the data
-shotDataRaw <- read.csv('../../data/shot_logs_pca.csv', header = TRUE, na.strings = c('NA','','#NA'))
+shotDataRaw <- read.csv('../data/shot_logs_pca.csv', header = TRUE, na.strings = c('NA','','#NA'))
 shotData <- shotDataRaw
 
 #scaling not required for gbm

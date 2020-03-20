@@ -34,9 +34,6 @@ distanceBasket <- NULL
 #distance from shooter to closest defender
 distanceDefender <- NULL
 
-defenderX <- NULL
-defenderY <- NULL
-
 # Define UI for application
 ui <- fluidPage(
     fluidRow(
@@ -63,7 +60,7 @@ ui <- fluidPage(
                             )
                 ),
                 actionButton("predict",
-                             "Predict"),
+                             "Predict Again"),
                 actionButton("reset",
                              "Reset Positions"),
                 h4(" "),
@@ -154,27 +151,21 @@ server <- function(session, input, output) {
         output$distBasket <- NULL
         output$defenderShooterDist <- NULL
         output$prediction <- NULL
-        
-        defenderX <<- "NA"
-        defenderY <<- "NA"
 
     })
     
     observeEvent(input$dbl_click, {
         #input closest defender distance into our current shot data frame to be used for prediction
-        defenderX <<- input$dbl_click$x
-        defenderY <<- input$dbl_click$y
-            
         individualShot$CLOSE_DEF_DIST<- distanceDefender
         
-        distanceDefender <-(pointDistance(c(defenderX, defenderY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
+        distanceDefender <-(pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
         output$defenderPos <- renderPrint({
             cat("Defender Position (from top-left corner):\n")
             cat("x = ")
-            cat(round(defenderX * scalingFactor,digits=2))
+            cat(round(input$dbl_click$x * scalingFactor,digits=2))
             cat(" feet")
             cat("\ny = ")
-            cat(round(defenderY * scalingFactor,digits=2))
+            cat(round(input$dbl_click$y * scalingFactor,digits=2))
             cat(" feet")
         })
         
@@ -213,10 +204,8 @@ server <- function(session, input, output) {
             #input the selected distance to basket into our current shot data frame to be used for prediction
             individualShot$SHOT_DIST <- distanceBasket
             
-            if (!(defenderX == "NA")){
             #input the selected distance to basket into our current shot data frame to be used for prediction
-            individualShot$CLOSE_DEF_DIST <- (pointDistance(c(defenderX, defenderY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
-
+            individualShot$CLOSE_DEF_DIST <- (pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
             
             #input the selected shooter to the current shot data frame to be used for prediction
             individualShot$PERIOD <- input$period
@@ -235,7 +224,7 @@ server <- function(session, input, output) {
                 cat(round(individualPredict$yes*100, digits=2))
                 cat("%")
             })
-            }
+            
         })
         
         output$defenderShooterDist <- renderPrint({
@@ -276,10 +265,8 @@ server <- function(session, input, output) {
             #input the selected distance to basket into our current shot data frame to be used for prediction
             individualShot$SHOT_DIST <- distanceBasket
             
-            if (!(defenderX == "NA")){
-                #input the selected distance to basket into our current shot data frame to be used for prediction
-            individualShot$CLOSE_DEF_DIST <- (pointDistance(c(defenderX, defenderY), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
-
+            #input the selected distance to basket into our current shot data frame to be used for prediction
+            individualShot$CLOSE_DEF_DIST <- (pointDistance(c(input$dbl_click$x, input$dbl_click$y), c(input$image_click$x, input$image_click$y), type='Euclidean', lonlat=FALSE)) * scalingFactor
             
             #input the selected shooter to the current shot data frame to be used for prediction
             individualShot$PERIOD <- input$period
@@ -297,7 +284,6 @@ server <- function(session, input, output) {
                 cat(round(individualPredict$yes*100, digits=2))
                 cat("%")
             })
-            }
         })
         
         output$defenderShooterDist <- renderPrint({

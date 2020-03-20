@@ -5,7 +5,7 @@ library(caret)
 library(e1071)
 
 # Read the data
-shotDataRaw <- read.csv('../../data/shot_longs_clean_noNA_secondsclock.csv', header = TRUE, na.strings = c('NA','','#NA'))
+shotDataRaw <- read.csv('../data/shot_longs_clean_noNA_secondsclock.csv', header = TRUE, na.strings = c('NA','','#NA'))
 
 #columns to keep
 shotData <- shotDataRaw[
