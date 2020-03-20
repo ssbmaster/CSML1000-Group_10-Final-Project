@@ -235,6 +235,13 @@ The biplot of PC1 against PC2 (shown below) displays arrow vectors for each feat
 * Lastly, the highly correlated TOUCH_TIME and DRIBBLE have a significant effect on the combined features.
 
 Having conducted this analysis, we have learned a bit more about the individual features and how they impact our data, and therefore our prediction. We will use this information to choose what features we expose to the user through our application. For instance, exposing either TOUCH_TIME or DRIBBLE would likely have similar effect, so we may simply pick one of them. This is also a good rough measure of the significance of each feature.
+```{r echo=TRUE, message=FALSE, warning = FALSE, eval=FALSE, fig.align="center"}
+Importance of components:
+                         PC1    PC2    PC3    PC4    PC5     PC6     PC7     PC8
+Standard deviation     1.483 1.2860 1.1858 0.9954 0.9659 0.66435 0.55532 0.25781
+Proportion of Variance 0.275 0.2067 0.1758 0.1239 0.1166 0.05517 0.03855 0.00831
+Cumulative Proportion  0.275 0.4817 0.6575 0.7813 0.8980 0.95314 0.99169 1.00000
+```
 
 ```{r echo=FALSE, message=FALSE, warning = FALSE, fig.align="center"}
 pca <- ggdraw() + draw_image("../plots/pcaBiplot.png")
